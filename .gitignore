@@ -1,0 +1,25 @@
+# build çıktıları
+dist/
+build/
+release/
+
+# bağımlılıklar / önbellek
+node_modules/
+__pycache__/
+*.pyc
+
+# geliştirme karalama alanı + eski tasarım taslağı
+scratch/
+new_desing/
+
+# kullanıcı durumu (asla repoya girmez)
+backend/jam_settings.json
+backend/votes.json
+backend/access.json
+backend/game_overrides.json
+
+# büyük yerel varlıklar
+AyazJam Logo.png
+
+# araç ayarları
+.claude/

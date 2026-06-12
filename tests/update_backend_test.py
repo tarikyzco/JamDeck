@@ -139,6 +139,11 @@ step("bat: pid + quoted paths + robocopy + restore order",
      'set "PID=1234"' in content and 'robocopy "%SRC%" "%DST%"' in content
      and content.index('robocopy "%SRC%"') < content.index('robocopy "%BAK%"')
      and 'start "" "%EXE%"' in content)
+# saha dersleri: bekleme döngüsünde pipe YASAK (find stdin'de asılı kalıyordu),
+# timeout YASAK (konsolsuz ortamda patlıyor), zorla-kapat sibobu ŞART
+step("bat: no pipe in wait loop", "| find" not in content and "findstr /c:" in content)
+step("bat: ping-based sleep (no timeout cmd)", "timeout /t" not in content and "ping -n" in content)
+step("bat: force-kill failsafe present", "taskkill /PID %PID% /F" in content)
 
 shutil.rmtree(tmp, ignore_errors=True)
 fails = [r for r in results if not r[1]]

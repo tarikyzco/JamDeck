@@ -145,6 +145,13 @@ def backup_state(install_dir, backup_dir=BACKUP_DIR):
     return found
 
 
+# BAT notları (saha tecrübesiyle):
+# - Bekleme döngüsünde PIPE YOK: `tasklist | find` boru hattı, uygulama tam o
+#   anda ölürse find'ı sonsuza dek stdin bekletebiliyor (yaşandı). Geçici
+#   dosya + findstr ile pipe'sız kontrol yapılır.
+# - `timeout` yerine `ping -n N 127.0.0.1`: timeout, konsolsuz/yönlendirilmiş
+#   ortamda "input redirection not supported" diye patlar; ping her yerde çalışır.
+# - Emniyet sibobu: ~30 sn içinde kapanmazsa süreç zorla kapatılır, güncelleme sürer.
 BAT_TEMPLATE = r"""@echo off
 setlocal EnableDelayedExpansion
 set "PID={pid}"
@@ -153,23 +160,34 @@ set "DST={install_dir}"
 set "BAK={backup_dir}"
 set "EXE={exe_path}"
 set "LOG=%TEMP%\jamdeck_update.log"
+set "WTMP=%TEMP%\jamdeck_wait.tmp"
 echo [%date% %time%] JamDeck guncelleme basliyor (PID %PID%) > "%LOG%"
 
+set /a WTRIES=0
 :waitloop
-tasklist /FI "PID eq %PID%" 2>nul | find "%PID%" >nul
-if not errorlevel 1 (
-  timeout /t 1 /nobreak >nul
-  goto waitloop
+ping -n 2 127.0.0.1 >nul
+tasklist /FI "PID eq %PID%" /NH > "%WTMP%" 2>nul
+findstr /c:"%PID%" "%WTMP%" >nul 2>&1
+if errorlevel 1 goto copyphase
+set /a WTRIES+=1
+if !WTRIES! GEQ 30 (
+  echo Uygulama kapanmadi, zorla kapatiliyor >> "%LOG%"
+  taskkill /PID %PID% /F >nul 2>&1
+  ping -n 3 127.0.0.1 >nul
+  goto copyphase
 )
-timeout /t 1 /nobreak >nul
+goto waitloop
 
+:copyphase
+del "%WTMP%" 2>nul
+ping -n 2 127.0.0.1 >nul
 set /a TRIES=0
 :copyloop
 robocopy "%SRC%" "%DST%" /E /R:2 /W:1 /NFL /NDL >> "%LOG%" 2>&1
 if %ERRORLEVEL% GEQ 8 (
   set /a TRIES+=1
   if !TRIES! LSS 10 (
-    timeout /t 2 /nobreak >nul
+    ping -n 3 127.0.0.1 >nul
     goto copyloop
   )
   echo KOPYALAMA BASARISIZ - eski surum korunuyor >> "%LOG%"
@@ -206,9 +224,10 @@ def write_apply_bat(pid, src_dir, install_dir, exe_path,
 
 
 def launch_bat(bat_path):
-    flags = 0
-    if os.name == "nt":
-        flags = subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS
+    # YALNIZ CREATE_NO_WINDOW: DETACHED_PROCESS ile birlikte kullanmak geçersiz
+    # kombinasyon (ikisi de konsol bayrağı) — pencere görünmesine ve sürecin
+    # uygulamaya bağlı kalmasına yol açmıştı (yaşandı).
+    flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     subprocess.Popen(["cmd", "/c", str(bat_path)],
                      creationflags=flags, close_fds=True,
                      cwd=tempfile.gettempdir())

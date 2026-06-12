@@ -1397,11 +1397,17 @@ class JamDeckAPI:
 
         def shutdown():
             time.sleep(0.7)
-            try:
-                if self._window:
-                    self._window.destroy()
-            except Exception:
-                pass
+            # destroy ayrı thread'de: pywebview ana döngüsüyle kilitlenirse bile
+            # os._exit KOŞULSUZ çalışır (kilitlenme yaşandı — bat sonsuz beklemişti;
+            # bat tarafında da 30 sn'lik zorla-kapat sibobu var)
+            def _destroy():
+                try:
+                    if self._window:
+                        self._window.destroy()
+                except Exception:
+                    pass
+            threading.Thread(target=_destroy, daemon=True).start()
+            time.sleep(1.2)
             os._exit(0)
 
         threading.Thread(target=shutdown, daemon=True).start()

@@ -14,11 +14,14 @@ zip'i indirir, tek tıkla kendini günceller (ayarlar/oylar/kodlar korunur).
 2. ```powershell
    .\build_release.ps1
    ```
-   → `release\JamDeck-v2.1.0-win64.zip` üretir.
-3. ```powershell
-   gh release create v2.1.0 release\JamDeck-v2.1.0-win64.zip --title "v2.1.0" --notes "Yenilikler: ..."
+   → `release\JamDeck-v2.1.0-win64.zip` (güncelleyicinin indirdiği asset — ŞART)
+   → `release\JamDeck-Setup-v2.1.0.exe` (Inno Setup kurulum exe'si — ilk kurulum için)
+3. Sürüm notlarını bir dosyaya yazın (örn. `release\notlar.md`) ve:
+   ```powershell
+   & "C:\Program Files\GitHub CLI\gh.exe" release create v2.1.0 release\JamDeck-v2.1.0-win64.zip release\JamDeck-Setup-v2.1.0.exe --title "v2.1.0" --notes-file release\notlar.md
    ```
-   `--notes` metni uygulamadaki güncelleme kartında "Sürüm notları" olarak görünür.
+   Notlar uygulamadaki güncelleme kartında "Sürüm notları" olarak görünür.
+   (PowerShell 5.1'de çok satırlı `--notes` parametresi tırnak içerince bozuluyor — `--notes-file` kullanın.)
 
 Hepsi bu. Eski sürümü çalıştıran herkes açılışta "Yeni sürüm var" bildirimi
 alır; Kurulum'dan **İndir & Kur → Kur ve Yeniden Başlat** der, uygulama kapanır,

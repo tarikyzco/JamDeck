@@ -12,12 +12,16 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 
 ## ⬇️ İndir
 
-**[Son sürümü indirin →](../../releases/latest)** (`JamDeck-vX.Y.Z-win64.zip`)
+**[Son sürümü indirin →](../../releases/latest)**
 
-1. Zip'i bir klasöre açın → `Ayazjam Manager.exe` çalıştırın.
-   - Windows SmartScreen uyarısında: **Daha fazla bilgi → Yine de çalıştır** (uygulama imzasız).
-2. Sonrası otomatik: uygulama açılışta yeni sürümü bildirir, **İndir & Kur**
-   dersiniz, kendini günceller — ayarlarınız ve oylar korunur.
+| Dosya | Ne için |
+|---|---|
+| `JamDeck-Setup-vX.Y.Z.exe` | **Önerilen** — klasik kurulum: Başlat menüsü + masaüstü kısayolu, kaldırıcı. Yönetici izni istemez. |
+| `JamDeck-vX.Y.Z-win64.zip` | Taşınabilir (portable): bir klasöre açın, `Ayazjam Manager.exe` çalıştırın. USB'den bile çalışır. |
+
+- Windows SmartScreen uyarısında: **Daha fazla bilgi → Yine de çalıştır** (uygulama imzasız).
+- Sonrası otomatik: uygulama açılışta yeni sürümü bildirir, **İndir & Kur**
+  dersiniz, kendini günceller — ayarlarınız ve oylar korunur (iki dağıtımda da).
 
 **Gereksinimler:** Windows 10/11 (WebView2 — Windows 11'de hazır gelir).
 

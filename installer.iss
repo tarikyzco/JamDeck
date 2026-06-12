@@ -35,6 +35,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+; Oylama/sayaç sunucuları için gelen-bağlantı izni: kurulumda BİR KEZ UAC onayı
+; ister, jam günü Windows güvenlik duvarı penceresi hiç çıkmaz.
+Name: "fwrule"; Description: "Güvenlik duvarı izni ekle (LAN oylaması/sayaç için önerilir)"
 
 [Files]
 Source: "dist\JamDeck\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -45,3 +48,30 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// Güvenlik duvarı kuralı: netsh yönetici ister -> 'runas' ile tek UAC onayı.
+// Kullanıcı UAC'yi iptal ederse sessizce geçilir (kurulum hatasız sürer);
+// o durumda izin penceresi ilk sunucu başlatmada her zamanki gibi çıkar.
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  Params: String;
+begin
+  if (CurStep = ssPostInstall) and WizardIsTaskSelected('fwrule') then
+  begin
+    Params := 'advfirewall firewall add rule name="JamDeck" dir=in action=allow program="'
+              + ExpandConstant('{app}') + '\{#MyAppExeName}" enable=yes profile=any';
+    ShellExec('runas', 'netsh.exe', Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
+begin
+  if CurUninstallStep = usPostUninstall then
+    ShellExec('runas', 'netsh.exe',
+      'advfirewall firewall delete rule name="JamDeck"',
+      '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;

@@ -24,6 +24,8 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 | `JamDeck-vX.Y.Z-win64.zip` | Taşınabilir (portable): bir klasöre açın, `JamDeck.exe` çalıştırın. USB'den bile çalışır. |
 
 - Windows SmartScreen uyarısında: **Daha fazla bilgi → Yine de çalıştır** (uygulama imzasız).
+- Setup, kurulumda tek seferlik yönetici onayıyla güvenlik duvarı iznini
+  ayarlar — jam günü oylama/sayaç başlatırken izin penceresi çıkmaz.
 - Sonrası otomatik: uygulama açılışta yeni sürümü bildirir, **İndir & Kur**
   dersiniz, kendini günceller — ayarlarınız ve oylar korunur (iki dağıtımda da).
 

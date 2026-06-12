@@ -26,3 +26,6 @@ AyazJam Logo.png
 
 # eski jam'e ozel varliklar (yerel kalir)
 AyazJam Logo.ico
+
+# build sirasinda uretilir (build_release.ps1)
+version_info.txt

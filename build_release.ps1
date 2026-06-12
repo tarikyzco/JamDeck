@@ -13,7 +13,29 @@ if (-not $verLine) { Write-Error "backend\version.py icinde APP_VERSION bulunama
 $ver = $verLine.Matches[0].Groups[1].Value
 Write-Host "JamDeck v$ver paketleniyor..." -ForegroundColor Cyan
 
-# 2) temiz build
+# 2) exe surum metadata'si (SmartScreen/UAC pencerelerinde "JamDeck" gorunur,
+#    itibar sistemlerine tutarli urun kimligi sinyali verir)
+$v4 = "$ver.0"; $vTuple = ($v4 -split '\.') -join ', '
+@"
+VSVersionInfo(
+  ffi=FixedFileInfo(filevers=($vTuple), prodvers=($vTuple), mask=0x3f, flags=0x0,
+                    OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
+  kids=[
+    StringFileInfo([StringTable('040904B0', [
+      StringStruct('CompanyName', 'tarikyzco'),
+      StringStruct('FileDescription', 'JamDeck - Game Jam Manager'),
+      StringStruct('FileVersion', '$v4'),
+      StringStruct('InternalName', 'JamDeck'),
+      StringStruct('LegalCopyright', '(c) 2026 tarikyzco'),
+      StringStruct('OriginalFilename', 'JamDeck.exe'),
+      StringStruct('ProductName', 'JamDeck'),
+      StringStruct('ProductVersion', '$v4')])]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
+"@ | Out-File -Encoding utf8 "version_info.txt"
+
+# 3) temiz build
 if (Test-Path "dist")  { Remove-Item -Recurse -Force "dist" }
 if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
 pyinstaller "JamDeck.spec" --noconfirm

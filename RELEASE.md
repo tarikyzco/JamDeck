@@ -43,7 +43,23 @@ yeni sürüm kurulur ve kendiliğinden açılır.
 ## Notlar / bilinen durumlar
 
 - **SmartScreen:** exe imzasız olduğu için ilk çalıştırmada Windows uyarı
-  verebilir → "Daha fazla bilgi → Yine de çalıştır".
+  verebilir → "Daha fazla bilgi → Yine de çalıştır". Ücretsiz yapılabilenler
+  (her yeni sürümde tekrarlanması önerilir):
+  1. **Microsoft'a temiz dosya bildirimi:** https://www.microsoft.com/wdsi/filesubmission
+     → "Software developer" olarak hem Setup exe'yi hem zip'i gönderin
+     (Microsoft hesabıyla, ücretsiz; analiz birkaç gün sürebilir).
+  2. SmartScreen uyarısı ekranındayken **"Report that this app is safe"**
+     bağlantısını kullanın.
+  3. Exe'de tam sürüm metadata'sı var (ProductName=JamDeck, build sırasında
+     `version_info.txt` üretilir) — itibar sistemine tutarlı kimlik sinyali.
+  - Kalıcı çözüm kod imzalama sertifikasıdır (örn. Certum bireysel, ~€70-90/yıl);
+    alınırsa `build_release.ps1`'e signtool adımı eklenecek.
+- **Güvenlik duvarı:** Setup, "Güvenlik duvarı izni ekle" görevi işaretliyken
+  (varsayılan) kurulumda BİR KEZ UAC onayı ister ve JamDeck için gelen-bağlantı
+  kuralı yazar → jam günü oylama/sayaç sunucusu açılırken Windows izin penceresi
+  ÇIKMAZ. UAC iptal edilirse kurulum sorunsuz devam eder, izin penceresi eskisi
+  gibi ilk sunucu başlatmada gelir. Kaldırmada kural silinir.
+  Kontrol: `netsh advfirewall firewall show rule name="JamDeck"`.
 - `robocopy /E` üstüne kopyalar, silmez: çok eski sürümden kalan artık dosyalar
   klasörde kalabilir (zararsız). Temiz kurulum isterseniz klasörü silip zip'i
   elle açın.

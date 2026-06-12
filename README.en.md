@@ -1,0 +1,70 @@
+<div align="right">
+
+[🇹🇷 Türkçe](README.md) · 🇬🇧 **English**
+
+</div>
+
+# 🎮 JamDeck
+
+**All-in-one desktop toolkit for running game jams** — downloads builds from
+itch.io, presents them on stage, runs weighted LAN voting from phones, reveals
+results, and puts a themed 48-hour countdown on the venue screen. Works fully
+offline (only downloading and updates need internet), customizable for any jam.
+
+> ℹ️ **Note:** The permanent logo hasn't been chosen yet — the current icon is
+> a temporary placeholder.
+
+## ⬇️ Download
+
+**[Get the latest release →](../../releases/latest)**
+
+| File | What for |
+|---|---|
+| `JamDeck-Setup-vX.Y.Z.exe` | **Recommended** — classic installer: Start Menu + desktop shortcut, uninstaller. No admin rights needed. |
+| `JamDeck-vX.Y.Z-win64.zip` | Portable: extract to a folder and run `JamDeck.exe`. Even works from a USB stick. |
+
+- On the Windows SmartScreen warning: **More info → Run anyway** (the app is unsigned).
+- Everything after that is automatic: on startup the app announces new
+  versions; click **Download & Install** and it updates itself — your settings
+  and votes are preserved (in both distributions).
+
+**Requirements:** Windows 10/11 (WebView2 — preinstalled on Windows 11).
+
+## ✨ Features
+
+| | |
+|---|---|
+| 📥 **Download & Prepare** | One-click itch.io jam archive download, extracts zip/rar/7z/tar and nested archives, pulls game name + cover automatically, flags broken submissions |
+| 🎬 **Presentation** | Fullscreen stage: game list + giant cover + one-click launch; auto-close on time-up, web (HTML5/WebGL) games included |
+| 🗳️ **LAN Voting** | Jury / Audience / Team vote from phones (weighted categories); single-use access codes, **live code board** (used codes flip instantly for everyone), QR screen |
+| 🏆 **Results** | Top-3 podium, per-group breakdowns, shareable PNG results poster + technical .xlsx report |
+| ⏱️ **Countdown** | 48-hour jam timer: 8 styles (Neon, LED, Pixel, Glitch, HP-Bar…), 3 logo slots, **auto-fullscreen from any screen** 10 minutes before start, OBS Browser-Source support |
+| 🎨 **Themes** | 16 presets + full color/font/effect customization; the theme carries over to the phone voting page |
+| 📋 **Submission Guide** | Rules screen to share with participants + 1080×1920 poster export; texts editable in-app |
+| 🔄 **Auto-Update** | The app finds, downloads and installs new versions by itself |
+
+## 📸 Screenshots
+
+| Presentation stage | Setup & themes |
+|---|---|
+| ![Presentation](docs/sunum.png) | ![Themes](docs/kurulum-temalar.png) |
+
+| Voting admin | Voting on a phone | Live code board |
+|---|---|---|
+| ![Voting](docs/oylama.png) | ![Phone](docs/telefon-oylama.png) | ![Code board](docs/kod-panosu.png) |
+
+| Countdown (Pixel style) | Countdown setup | Results |
+|---|---|---|
+| ![Countdown](docs/sayac-pixel.png) | ![Countdown setup](docs/sayac-kurulum.png) | ![Results](docs/sonuclar.png) |
+
+## 📖 User Guide
+
+Step-by-step interactive guide: **[JamDeck-Rehber.html](JamDeck-Rehber.html)**
+(download and open in a browser — currently in Turkish).
+
+## ℹ️
+
+JamDeck is a closed-source, **free** application. Use the
+[Issues](../../issues) page for bug reports and suggestions.
+
+© 2026 tarikyzco

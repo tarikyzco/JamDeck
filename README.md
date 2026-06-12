@@ -1,3 +1,9 @@
+<div align="right">
+
+🇹🇷 **Türkçe** · [🇬🇧 English](README.en.md)
+
+</div>
+
 # 🎮 JamDeck
 
 **Game jam'ler için hepsi-bir-arada masaüstü yönetim uygulaması** — oyunları
@@ -5,10 +11,8 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 48 saatlik geri sayımı mekan ekranına yansıtır. Tamamen çevrimdışı çalışır
 (yalnız indirme ve güncelleme internet ister), her jam'e göre özelleştirilir.
 
-> All-in-one desktop toolkit for running game jams: download builds from
-> itch.io, present on stage, run weighted LAN voting from phones, reveal
-> results, and put a themed 48-hour countdown on the venue screen.
-> Turkish/English UI. Windows 10/11.
+> ℹ️ **Not:** Uygulamanın kalıcı logosu henüz seçilmedi — şu anki simge geçici
+> bir yer tutucudur.
 
 ## ⬇️ İndir
 
@@ -17,7 +21,7 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 | Dosya | Ne için |
 |---|---|
 | `JamDeck-Setup-vX.Y.Z.exe` | **Önerilen** — klasik kurulum: Başlat menüsü + masaüstü kısayolu, kaldırıcı. Yönetici izni istemez. |
-| `JamDeck-vX.Y.Z-win64.zip` | Taşınabilir (portable): bir klasöre açın, `Ayazjam Manager.exe` çalıştırın. USB'den bile çalışır. |
+| `JamDeck-vX.Y.Z-win64.zip` | Taşınabilir (portable): bir klasöre açın, `JamDeck.exe` çalıştırın. USB'den bile çalışır. |
 
 - Windows SmartScreen uyarısında: **Daha fazla bilgi → Yine de çalıştır** (uygulama imzasız).
 - Sonrası otomatik: uygulama açılışta yeni sürümü bildirir, **İndir & Kur**

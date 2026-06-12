@@ -24,6 +24,8 @@ offline (only downloading and updates need internet), customizable for any jam.
 | `JamDeck-vX.Y.Z-win64.zip` | Portable: extract to a folder and run `JamDeck.exe`. Even works from a USB stick. |
 
 - On the Windows SmartScreen warning: **More info → Run anyway** (the app is unsigned).
+- The installer configures the Windows Firewall permission with a single
+  admin confirmation — no firewall popup when you start voting/countdown at the jam.
 - Everything after that is automatic: on startup the app announces new
   versions; click **Download & Install** and it updates itself — your settings
   and votes are preserved (in both distributions).

@@ -47,5 +47,5 @@ yeni sürüm kurulur ve kendiliğinden açılır.
 - `robocopy /E` üstüne kopyalar, silmez: çok eski sürümden kalan artık dosyalar
   klasörde kalabilir (zararsız). Temiz kurulum isterseniz klasörü silip zip'i
   elle açın.
-- Zip yapısı: kökte `Ayazjam Manager\` klasörü (build_release.ps1 böyle üretir).
+- Zip yapısı: kökte `JamDeck\` klasörü (build_release.ps1 böyle üretir).
   Güncelleyici, exe'yi kökte ya da tek alt klasörde de bulabilir (toleranslı).

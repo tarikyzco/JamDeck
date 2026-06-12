@@ -1,8 +1,8 @@
-"""Faz 4 test: itch.io otomatik metadata (oyun adı + takım + kapak).
+﻿"""Faz 4 test: itch.io otomatik metadata (oyun adÄ± + takÄ±m + kapak).
 
-(1) scanGames metadata.json'dan title/author okur; metadata'sız klasör sezgisele düşer.
-(2) organizeFiles itch klasörünü (<slug>/files/<zip> + metadata.json) YERİNDE çıkarır;
-    metadata.json korunur, files/ silinir, ayrı bir klasör oluşmaz.
+(1) scanGames metadata.json'dan title/author okur; metadata'sÄ±z klasÃ¶r sezgisele dÃ¼ÅŸer.
+(2) organizeFiles itch klasÃ¶rÃ¼nÃ¼ (<slug>/files/<zip> + metadata.json) YERÄ°NDE Ã§Ä±karÄ±r;
+    metadata.json korunur, files/ silinir, ayrÄ± bir klasÃ¶r oluÅŸmaz.
 Run: python tests/itch_metadata_test.py
 """
 import base64
@@ -18,7 +18,7 @@ from backend.api import JamDeckAPI  # noqa: E402
 
 log = []
 def check(name, ok, extra=""):
-    log.append(("PASS" if ok else "FAIL") + f"  {name}" + (f" — {extra}" if extra else ""))
+    log.append(("PASS" if ok else "FAIL") + f"  {name}" + (f" â€” {extra}" if extra else ""))
 
 # tiny valid 1x1 PNG
 PNG_1x1 = base64.b64decode(
@@ -65,7 +65,7 @@ dev2 = os.path.join(tmp2, "devslug")
 write(os.path.join(dev2, "metadata.json"),
       json.dumps({"title": "Tutsak", "author": "AKP"}))
 write(os.path.join(dev2, "cover.jpg"), PNG_1x1)
-zip_path = os.path.join(dev2, "files", "AyazJam2025.zip")
+zip_path = os.path.join(dev2, "files", "DemoJam2025.zip")
 os.makedirs(os.path.dirname(zip_path), exist_ok=True)
 with zipfile.ZipFile(zip_path, "w") as z:
     z.writestr("Tutsak.exe", "MZ")
@@ -86,7 +86,7 @@ check("itch extracted in place (exe in slug dir)", os.path.exists(os.path.join(d
 check("metadata.json preserved", os.path.exists(os.path.join(dev2, "metadata.json")))
 check("cover preserved", os.path.exists(os.path.join(dev2, "cover.jpg")))
 check("files/ cleaned up", not os.path.exists(os.path.join(dev2, "files")))
-check("no separate folder created", not os.path.exists(os.path.join(tmp2, "AyazJam2025")))
+check("no separate folder created", not os.path.exists(os.path.join(tmp2, "DemoJam2025")))
 
 # and scanGames now reads it end-to-end
 games2 = api2.scanGames()
@@ -99,3 +99,4 @@ print("\n".join(log))
 fails = sum(1 for l in log if l.startswith("FAIL"))
 print(f"\n{len(log)-fails}/{len(log)} passed")
 sys.exit(1 if fails else 0)
+

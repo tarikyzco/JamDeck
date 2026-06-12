@@ -7,7 +7,7 @@
   #define MyAppVersion "0.0.0"
 #endif
 #define MyAppName "JamDeck"
-#define MyAppExeName "Ayazjam Manager.exe"
+#define MyAppExeName "JamDeck.exe"
 
 [Setup]
 AppId={{B7E26C5A-9A1B-4F0E-8C3D-2A47D1E5F9B4}
@@ -22,7 +22,7 @@ DisableDirPage=auto
 PrivilegesRequired=lowest
 OutputDir=release
 OutputBaseFilename=JamDeck-Setup-v{#MyAppVersion}
-SetupIconFile=AyazJam Logo.ico
+SetupIconFile=JamDeck.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 Compression=lzma2
@@ -37,7 +37,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "dist\Ayazjam Manager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\JamDeck\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

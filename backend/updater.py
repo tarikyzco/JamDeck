@@ -22,7 +22,9 @@ from pathlib import Path
 # güncellemede asla kaybolmaması gereken kullanıcı durumu
 STATE_FILES = ("jam_settings.json", "votes.json", "access.json", "game_overrides.json")
 
-EXE_NAME = "Ayazjam Manager.exe"
+# yeni ad + eski sürümlerden gelen güncellemeler için eski ad da tanınır
+EXE_CANDIDATES = ("JamDeck.exe", "Ayazjam Manager.exe")
+EXE_NAME = EXE_CANDIDATES[0]
 
 TMP = Path(tempfile.gettempdir())
 ZIP_PATH = TMP / "jamdeck_update.zip"
@@ -100,6 +102,14 @@ def download_asset(url, dest=ZIP_PATH, progress_cb=None, cancel_flag=None):
 
 # ------------------------------------------------------------------ kurulum hazırlığı
 
+def find_exe(folder):
+    """Klasördeki uygulama exe'sinin adını döndür (yeni ya da eski ad), yoksa None."""
+    for name in EXE_CANDIDATES:
+        if (Path(folder) / name).exists():
+            return name
+    return None
+
+
 def stage_zip(zip_path, stage_dir=STAGE_DIR):
     """Zip'i aç ve uygulama kökünü döndür. Kök tespiti toleranslı:
     exe doğrudan kökte ya da tek bir alt klasördeyse her ikisi de kabul."""
@@ -109,11 +119,11 @@ def stage_zip(zip_path, stage_dir=STAGE_DIR):
     stage_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path) as z:
         z.extractall(stage_dir)
-    if (stage_dir / EXE_NAME).exists():
+    if find_exe(stage_dir):
         return stage_dir
     subdirs = [d for d in stage_dir.iterdir() if d.is_dir()]
     for d in subdirs:
-        if (d / EXE_NAME).exists():
+        if find_exe(d):
             return d
     raise ValueError("bad_zip")
 

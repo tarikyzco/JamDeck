@@ -1389,8 +1389,10 @@ class JamDeckAPI:
             return {"ok": False, "error": str(e)}
         install_dir = Path(sys.executable).parent
         updater.backup_state(install_dir)
+        # yeniden başlatılacak exe: YENİ sürümdeki ad (exe adı değişse de çalışır)
+        new_exe = install_dir / (updater.find_exe(src) or Path(sys.executable).name)
         bat = updater.write_apply_bat(
-            os.getpid(), src, install_dir, sys.executable, zip_path=zip_path)
+            os.getpid(), src, install_dir, new_exe, zip_path=zip_path)
         updater.launch_bat(bat)
 
         def shutdown():

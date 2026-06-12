@@ -88,24 +88,27 @@ httpd.shutdown()
 tmp = Path(tempfile.mkdtemp())
 
 
-def make_zip(name, inner_root):
+def make_zip(name, inner_root, exe_name=updater.EXE_NAME):
     zp = tmp / name
     with zipfile.ZipFile(zp, "w") as z:
         prefix = f"{inner_root}/" if inner_root else ""
-        z.writestr(f"{prefix}{updater.EXE_NAME}", b"exe")
+        z.writestr(f"{prefix}{exe_name}", b"exe")
         z.writestr(f"{prefix}_internal/frontend/index.html", b"<html>")
     return zp
 
 
 stage = tmp / "stage1"
-root = updater.stage_zip(make_zip("normal.zip", "Ayazjam Manager"), stage)
-step("stage: normal root", (root / updater.EXE_NAME).exists() and root.name == "Ayazjam Manager")
+root = updater.stage_zip(make_zip("normal.zip", "JamDeck"), stage)
+step("stage: normal root", (root / updater.EXE_NAME).exists() and root.name == "JamDeck")
 stage = tmp / "stage2"
 root = updater.stage_zip(make_zip("renamed.zip", "JamDeck-yeni"), stage)
 step("stage: renamed root tolerated", (root / updater.EXE_NAME).exists())
 stage = tmp / "stage3"
 root = updater.stage_zip(make_zip("flat.zip", ""), stage)
 step("stage: exe at zip root", (root / updater.EXE_NAME).exists() and root == stage)
+stage = tmp / "stage_legacy"
+root = updater.stage_zip(make_zip("legacy.zip", "Ayazjam Manager", "Ayazjam Manager.exe"), stage)
+step("stage: legacy exe name tolerated", updater.find_exe(root) == "Ayazjam Manager.exe")
 try:
     bad = tmp / "bad.zip"
     with zipfile.ZipFile(bad, "w") as z:
@@ -116,7 +119,7 @@ except ValueError:
     step("stage: bad zip raises", True)
 
 # ---------- backup_state ----------
-install = tmp / "install" / "Ayazjam Manager"
+install = tmp / "install" / "JamDeck"
 (install / "_internal" / "backend").mkdir(parents=True)
 for n in ("jam_settings.json", "votes.json"):
     (install / "_internal" / "backend" / n).write_text("{}", encoding="utf-8")
@@ -129,7 +132,7 @@ step("backup preserves relative paths",
      and (bak / "access.json").exists())
 
 # ---------- bat üretimi ----------
-bat = updater.write_apply_bat(1234, tmp / "src", install, install / "Ayazjam Manager.exe",
+bat = updater.write_apply_bat(1234, tmp / "src", install, install / "JamDeck.exe",
                               backup_dir=bak, zip_path=tmp / "u.zip", bat_path=tmp / "apply.bat")
 content = bat.read_text(encoding="cp1254")
 step("bat: pid + quoted paths + robocopy + restore order",

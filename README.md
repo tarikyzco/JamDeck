@@ -10,6 +10,8 @@
 itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıklar ve
 48 saatlik geri sayımı mekan ekranına yansıtır. Tamamen çevrimdışı çalışır
 (yalnız indirme ve güncelleme internet ister), her jam'e göre özelleştirilir.
+**7 dilde** kullanılabilir — Türkçe · English · Français · Deutsch · Español ·
+Português · 日本語.
 
 > ℹ️ **Not:** Uygulamanın kalıcı logosu henüz seçilmedi — şu anki simge geçici
 > bir yer tutucudur.
@@ -43,6 +45,7 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 | 🎨 **Tema** | 16 hazır palet + tam renk/font/efekt özelleştirme; tema telefonlardaki oy sayfasına da yansır |
 | 📋 **Teslim Kılavuzu** | Katılımcılara paylaşılan kurallar ekranı + 1080×1920 poster çıktısı; metinler uygulama içinden düzenlenebilir |
 | 🔄 **Otomatik Güncelleme** | Uygulama yeni sürümü kendisi bulur, indirir, kurar |
+| 🌍 **7 Dil** | Arayüzün tamamı Türkçe, English, Français, Deutsch, Español, Português ve 日本語 — telefon oy sayfası, kod panosu ve OBS sayaç dahil; varsayılan oy kategorileri de çevrilir, açılır menüden anında değişir |
 
 ## 📸 Ekran Görüntüleri
 

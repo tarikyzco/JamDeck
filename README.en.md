@@ -10,6 +10,8 @@
 itch.io, presents them on stage, runs weighted LAN voting from phones, reveals
 results, and puts a themed 48-hour countdown on the venue screen. Works fully
 offline (only downloading and updates need internet), customizable for any jam.
+Available in **7 languages** — Türkçe · English · Français · Deutsch · Español ·
+Português · 日本語.
 
 > ℹ️ **Note:** The permanent logo hasn't been chosen yet — the current icon is
 > a temporary placeholder.
@@ -44,6 +46,7 @@ offline (only downloading and updates need internet), customizable for any jam.
 | 🎨 **Themes** | 16 presets + full color/font/effect customization; the theme carries over to the phone voting page |
 | 📋 **Submission Guide** | Rules screen to share with participants + 1080×1920 poster export; texts editable in-app |
 | 🔄 **Auto-Update** | The app finds, downloads and installs new versions by itself |
+| 🌍 **7 Languages** | Whole UI in Turkish, English, French, German, Spanish, Portuguese and Japanese — including the phone voting page, code board and OBS countdown; default vote categories localize too, switch live from a dropdown |
 
 ## 📸 Screenshots
 

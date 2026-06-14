@@ -13,6 +13,8 @@ offline (only downloading and updates need internet), customizable for any jam.
 Available in **7 languages** — Türkçe · English · Français · Deutsch · Español ·
 Português · 日本語.
 
+![JamDeck interface in 7 languages](docs/jamdeck-langs.gif)
+
 > ℹ️ **Note:** The permanent logo hasn't been chosen yet — the current icon is
 > a temporary placeholder.
 

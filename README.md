@@ -13,6 +13,8 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 **7 dilde** kullanılabilir — Türkçe · English · Français · Deutsch · Español ·
 Português · 日本語.
 
+![JamDeck arayüzü 7 dilde](docs/jamdeck-langs.gif)
+
 > ℹ️ **Not:** Uygulamanın kalıcı logosu henüz seçilmedi — şu anki simge geçici
 > bir yer tutucudur.
 

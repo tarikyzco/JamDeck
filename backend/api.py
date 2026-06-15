@@ -1231,8 +1231,9 @@ class JamDeckAPI:
         res = self._voting.start(port=int(cfg.get("port", 8770)), config=cfg, brand=brand)
         self._voting_info = res if res.get("ok") else {}
         if res.get("ok"):
-            # open the Windows Firewall for the port so phones on the LAN can connect
-            res["firewall"] = self._ensure_firewall_rule(res.get("port", 8770))
+            # NOT: Windows Firewall (LAN) kuralı KALDIRILDI — online oylama tünelden
+            # (localhost) çalışır, loopback firewall'dan muaf → inbound kurala gerek yok.
+            # (Eski netsh çağrısı timeout'suzdu ve bazen "Başlat"ı asıyordu.)
             self._voting_info = res
             # if a game is already running, surface it immediately (name only)
             if self._active_game_id and self._active_game_id in self._games:
@@ -1243,33 +1244,6 @@ class JamDeckAPI:
                 except Exception:
                     pass
         return res
-
-    def _ensure_firewall_rule(self, port):
-        """Best-effort: ensure a Windows Firewall inbound allow rule for the LAN
-        voting port. Adds it via a one-time elevated (UAC) netsh call so jam
-        organizers don't have to touch the firewall manually. Returns a status
-        string: exists | prompted | denied | skipped | error."""
-        if sys.platform != "win32":
-            return "skipped"
-        rule = f"JamDeck Oylama {port}"
-        no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-        try:
-            chk = subprocess.run(
-                ["netsh", "advfirewall", "firewall", "show", "rule", f"name={rule}"],
-                capture_output=True, text=True, creationflags=no_window,
-            )
-            if chk.returncode == 0:
-                return "exists"
-        except Exception:
-            pass
-        try:
-            import ctypes
-            params = (f'advfirewall firewall add rule name="{rule}" dir=in '
-                      f'action=allow protocol=TCP localport={port} profile=any')
-            rc = ctypes.windll.shell32.ShellExecuteW(None, "runas", "netsh", params, None, 0)
-            return "prompted" if rc > 32 else "denied"
-        except Exception:
-            return "error"
 
     def stopVoting(self):
         self._stop_tunnel()

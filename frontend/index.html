@@ -3882,9 +3882,7 @@ async function toggleVoting(){
     if(res&&res.ok){
       _inetPending=true;   // public link hazır olana dek loading göster
       applyVotingStatus({...res,running:true}); toast(t("vote_running"),"success");
-      if(res.firewall==="prompted") toast(t("vote_fw_prompt"),"info");
-      else if(res.firewall==="denied"||res.firewall==="error") toast(t("vote_fw_denied"),"error");
-      // Online oylama: Tailscale funnel'ı Başlat'ta her zaman aç (public link).
+      // Online oylama: tüneli Başlat'ta her zaman aç (public link). LAN firewall yok.
       startInternetTunnel();
     }
     else toast((res&&res.error)||t("vote_start_fail"),"error");

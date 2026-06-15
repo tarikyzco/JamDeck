@@ -811,6 +811,26 @@ body.kiosk-mode .sidebar{display:none}
 .qr-hint{font-size:12.5px; color:var(--text-muted); margin:0; text-align:center}
 .qr-modal .modal-actions{justify-content:center; width:100%}
 
+/* ── EKRAN-ORTASI GÜNCELLEME BİLDİRİMİ (dikkat çekici) ── */
+.upd-modal{width:min(450px,calc(100vw - 48px)); text-align:center; padding:30px 26px;
+  border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border));
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent), 0 26px 90px color-mix(in srgb,var(--bg) 82%,transparent), var(--glow)}
+.upd-modal .upd-emoji{font-size:48px; line-height:1; animation:updFloat 2.4s ease-in-out infinite}
+@keyframes updFloat{50%{transform:translateY(-8px)}}
+.upd-modal h3{font-size:21px; margin:10px 0 6px}
+.upd-modal .upd-ver{display:inline-block; font:800 14px var(--font-mono); color:var(--accent-ink);
+  background:linear-gradient(90deg,var(--accent),var(--accent-2)); padding:4px 15px; border-radius:999px; margin-bottom:14px}
+.upd-modal .upd-notes{font-size:12.5px; color:var(--text-muted); white-space:pre-line; text-align:left;
+  max-height:170px; overflow:auto; background:color-mix(in srgb,var(--surface-2) 60%,transparent);
+  border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 13px; margin-bottom:10px; line-height:1.5}
+.upd-modal .upd-hint{font-size:11.5px; color:var(--text-muted); margin-bottom:16px}
+.upd-modal .upd-bar{height:10px; border:1px solid var(--border); border-radius:99px; overflow:hidden; margin:4px 0 16px; background:var(--bg-2)}
+.upd-modal .upd-bar i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .25s ease}
+.upd-modal .modal-actions{justify-content:center; gap:12px}
+.upd-modal .modal-actions .btn{min-width:130px}
+.upd-pulse{animation:updPulse 1.3s ease-in-out infinite}
+@keyframes updPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)} 50%{box-shadow:0 0 0 12px transparent}}
+
 /* ─────────────────────────── SÜRE BİTTİ KATMANI ─────────────────────────── */
 .timesup{position:fixed; inset:0; z-index:190; display:grid; place-items:center; opacity:1;
   background:color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter:blur(10px);
@@ -2852,6 +2872,61 @@ function modal({title,body,confirmLabel,cancelLabel,danger,onConfirm}){
 }
 
 /* ============================================================
+   EKRAN-ORTASI GÜNCELLEME BİLDİRİMİ — oto indir → oto kur
+   Açılışta sürüm bulununca sönük toast yerine dikkat çekici merkez modal.
+   "Güncelle" → indirir (canlı çubuk) → indince OTOMATİK kurar (applyUpdate).
+   ============================================================ */
+let _updOv=null;
+function showUpdateOverlay(r){
+  if(_updOv) return;                       // zaten açık
+  const notes=(r&&r.notes)?String(r.notes).slice(0,400):"";
+  const ver=String((r&&r.latest)||"").replace(/^v/,"");
+  const bd=el(`<div class="modal-backdrop"><div class="modal upd-modal" role="dialog" aria-modal="true">
+    <div class="upd-emoji">🚀</div>
+    <h3>${t("upd_new_title")}</h3>
+    <div class="upd-ver">v${ver}</div>
+    ${notes?`<div class="upd-notes">${notes.replace(/</g,"&lt;")}</div>`:""}
+    <div class="upd-hint" id="updOvHint">${t("upd_auto_hint")}</div>
+    <div class="upd-bar" id="updOvBarWrap" style="display:none"><i id="updOvBar"></i></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="updOvLater">${t("upd_later")}</button>
+      <button class="btn btn-primary upd-pulse" id="updOvGo">${t("upd_install")}</button>
+    </div></div></div>`);
+  document.body.appendChild(bd);
+  requestAnimationFrame(()=>bd.classList.add("show"));
+  _updOv={bd, applied:false};
+  const close=()=>{ bd.classList.remove("show"); setTimeout(()=>bd.remove(),240); _updOv=null; };
+  $("#updOvLater",bd).onclick=close;
+  $("#updOvGo",bd).onclick=()=>{
+    if(!r||!r.assetUrl){ const h=$("#updOvHint",bd); if(h) h.textContent=t("upd_dev_hint"); return; }
+    const go=$("#updOvGo",bd), later=$("#updOvLater",bd), hint=$("#updOvHint",bd);
+    go.disabled=true; go.classList.remove("upd-pulse"); if(later) later.disabled=true;
+    const w=$("#updOvBarWrap",bd); if(w) w.style.display="";
+    if(hint) hint.textContent=t("upd_downloading");
+    Bridge.downloadUpdate(r.assetUrl);   // ilerleme + indince oto-kur global handler'larda
+  };
+}
+// güncelleme olayları overlay'i sürer (indir → oto kur). Bir kez bağlanır.
+let _updOvWired=false;
+function wireUpdateOverlay(){
+  if(_updOvWired||!Bridge.on) return; _updOvWired=true;
+  Bridge.on("update:progress",p=>{ if(!_updOv) return; const b=$("#updOvBar",_updOv.bd);
+    if(b&&p&&p.pct>=0) b.style.width=p.pct+"%"; });
+  Bridge.on("update:ready",async()=>{
+    if(!_updOv||_updOv.applied) return; _updOv.applied=true;
+    const h=$("#updOvHint",_updOv.bd); if(h) h.textContent=t("upd_installing");
+    try{ const rr=await Bridge.applyUpdate();   // OTO KUR (kullanıcı zaten Güncelle dedi)
+      if(rr&&!rr.ok){ if(h) h.textContent=(rr.error==="dev_mode")?t("upd_dev_hint"):(rr.detail||rr.error||"");
+        const g=$("#updOvGo",_updOv.bd); if(g) g.disabled=false; const l=$("#updOvLater",_updOv.bd); if(l) l.disabled=false; }
+    }catch(e){ if(h) h.textContent=t("upd_dev_hint"); }
+  });
+  Bridge.on("update:error",e=>{ if(!_updOv) return;
+    const h=$("#updOvHint",_updOv.bd); if(h) h.textContent=((e&&e.error)||"")+"";
+    const g=$("#updOvGo",_updOv.bd); if(g) g.disabled=false;
+    const l=$("#updOvLater",_updOv.bd); if(l) l.disabled=false; });
+}
+
+/* ============================================================
    SIDEBAR
    ============================================================ */
 const NAV = [
@@ -3875,17 +3950,22 @@ async function toggleVoting(){
   if(st&&st.running){ await Bridge.stopVoting(); applyVotingStatus({running:false}); toast(t("vote_stopped"),"info"); }
   else{
     const b=$("#voteToggle"); b.disabled=true;
-    // voter sayfası EKRANDA GÖRÜNEN temayla açılsın: kaydedilmemiş tema
-    // değişiklikleri de sunucu başlamadan diske yazılır
-    await Bridge.saveConfig(CONFIG);
-    const res=await Bridge.startVoting(); b.disabled=false;
-    if(res&&res.ok){
-      _inetPending=true;   // public link hazır olana dek loading göster
-      applyVotingStatus({...res,running:true}); toast(t("vote_running"),"success");
-      // Online oylama: tüneli Başlat'ta her zaman aç (public link). LAN firewall yok.
-      startInternetTunnel();
-    }
-    else toast((res&&res.error)||t("vote_start_fail"),"error");
+    try{
+      // voter sayfası EKRANDA GÖRÜNEN temayla açılsın: kaydedilmemiş tema
+      // değişiklikleri de sunucu başlamadan diske yazılır
+      await Bridge.saveConfig(CONFIG);
+      const res=await Bridge.startVoting();
+      if(res&&res.ok){
+        _inetPending=true;   // public link hazır olana dek loading göster
+        applyVotingStatus({...res,running:true}); toast(t("vote_running"),"success");
+        // Online oylama: tüneli Başlat'ta her zaman aç (public link). LAN firewall yok.
+        startInternetTunnel();
+      }
+      else toast((res&&(res.detail||res.error))||t("vote_start_fail"),"error");
+    }catch(e){
+      // köprü hatası bile olsa sessizce asılma — kullanıcıya bildir
+      console.error("startVoting:",e); toast(t("vote_start_fail"),"error");
+    }finally{ b.disabled=false; }   // buton HER durumda yeniden aktif
   }
 }
 
@@ -4561,12 +4641,13 @@ async function init(){
   // açılışta sessiz güncelleme denetimi (yalnız gerçek uygulama + auto açık);
   // repo uygulamaya gömülü (backend/version.py UPDATE_REPO); her hata sessizce yutulur
   if(inPywebview && CONFIG.update.auto){
+    wireUpdateOverlay();
     setTimeout(async()=>{
       try{
         const r=await Bridge.checkUpdate();
         if(r&&r.hasUpdate){
           window.__updFound=r;
-          toast(`${t("upd_toast_found")} (${r.latest})`,"info");
+          showUpdateOverlay(r);   // sönük toast yerine ekran-ortası dikkat çekici bildirim
           if(window.refreshUpdateCard) window.refreshUpdateCard();
         }
       }catch(e){}

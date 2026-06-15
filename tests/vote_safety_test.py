@@ -27,9 +27,12 @@ def step(name, ok, extra=""):
 
 def main():
     tmp = tempfile.mkdtemp(prefix="jamdeck_votes_")
-    # modül yollarını temp'e yönlendir
+    # modül yollarını temp'e yönlendir (veri yolları artık DATA_DIR tabanlı —
+    # %LOCALAPPDATA%\JamDeck\data; snapshot/votes/access hepsi DATA_DIR'dan türer)
     vs.MODULE_DIR = tmp
+    vs.DATA_DIR = tmp
     vs.VOTES_FILE = os.path.join(tmp, "votes.json")
+    vs.ACCESS_FILE = os.path.join(tmp, "access.json")
     srv = vs.VotingServer()
     srv.votes = []
 

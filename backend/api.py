@@ -13,8 +13,43 @@ import zipfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-APP_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_FILE = APP_DIR / "jam_settings.json"
+APP_DIR = Path(os.path.dirname(os.path.abspath(__file__)))  # paket içi (salt-okunur) kaynaklar
+
+
+def data_dir() -> Path:
+    """Yazılabilir kullanıcı verisi yolu — frozen (.exe) build'de _internal'a YAZILMAZ.
+    Tüm config/oy/erişim/log dosyaları burada yaşar: %LOCALAPPDATA%\\JamDeck\\data.
+    (Kök neden: PyInstaller _internal dizini yazmaya kapalı → FileNotFoundError →
+    PyWebView köprüsünde sessizce yutulup UI'ı sonsuza dek asıyordu.)"""
+    base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+    d = os.path.join(base, "JamDeck", "data")
+    try:
+        os.makedirs(d, exist_ok=True)
+    except OSError:
+        pass
+    return Path(d)
+
+
+DATA_DIR = data_dir()
+
+
+def _migrate_state_file(name: str):
+    """Eski sürüm dosyasını (backend yanı) yeni veri dizinine bir kez taşı/kopyala."""
+    new = DATA_DIR / name
+    if new.exists():
+        return
+    old = APP_DIR / name
+    try:
+        if old.exists() and old.resolve() != new.resolve():
+            shutil.copy2(old, new)
+    except OSError:
+        pass
+
+
+for _f in ("jam_settings.json", "game_overrides.json", "votes.json", "access.json"):
+    _migrate_state_file(_f)
+
+CONFIG_FILE = DATA_DIR / "jam_settings.json"
 
 
 def _i18n_file() -> Path:
@@ -515,6 +550,16 @@ class JamDeckAPI:
 
     # ------------------------------------------------------------------ helpers
 
+    def _log_exc(self, where, tb):
+        """Frozen (.exe) build'de konsol olmadığından hataları diske yaz —
+        %LOCALAPPDATA%\\JamDeck\\data\\app.log. Sessiz hataları teşhis edilebilir kılar."""
+        try:
+            with open(DATA_DIR / "app.log", "a", encoding="utf-8") as f:
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S ") + "[" + str(where) + "]\n"
+                        + str(tb) + "\n")
+        except OSError:
+            pass
+
     def _emit(self, event: str, payload):
         if not self._window:
             return
@@ -1007,7 +1052,7 @@ class JamDeckAPI:
 
     # ------------------------------------------------------------------ overrides
 
-    OVERRIDES_FILE = APP_DIR / "game_overrides.json"
+    OVERRIDES_FILE = DATA_DIR / "game_overrides.json"
 
     def _load_overrides(self):
         try:
@@ -1207,43 +1252,50 @@ class JamDeckAPI:
         return self._load_config().get("voting", copy.deepcopy(DEFAULT_CONFIG["voting"]))
 
     def startVoting(self):
+        # KRİTİK: tüm gövde try/except ile sarılı → ne olursa olsun JS'e {ok,error}
+        # döner (asla reject/exception sızdırmaz). Aksi halde PyWebView köprüsünde
+        # yutulan hata "Başlat"ı sonsuza dek asardı (frozen build'de gözlendi).
         try:
-            from backend.voting_server import VotingServer
-        except Exception:
-            from voting_server import VotingServer
-        cfg = self._voting_cfg()
-        # voter sayfası organizatörün temasıyla servis edilir
-        full_cfg = self._load_config()
-        theme = full_cfg.get("theme", {}) or {}
-        lang = (full_cfg.get("jam", {}) or {}).get("language", "tr")
-        # değiştirilmemiş varsayılan kategori/grup etiketlerini jam diline çevir
-        localize_vote_defaults(cfg, lang)
-        brand = {
-            "jamName": (full_cfg.get("jam", {}) or {}).get("name", ""),
-            "colors": theme.get("colors", {}) or {},
-            "radius": theme.get("radius"),
-            "glow": theme.get("glow"),
-            "language": lang,
-        }
-        if self._voting is not None and self._voting.is_running:
-            self._voting.stop()
-        self._voting = VotingServer()
-        res = self._voting.start(port=int(cfg.get("port", 8770)), config=cfg, brand=brand)
-        self._voting_info = res if res.get("ok") else {}
-        if res.get("ok"):
-            # NOT: Windows Firewall (LAN) kuralı KALDIRILDI — online oylama tünelden
-            # (localhost) çalışır, loopback firewall'dan muaf → inbound kurala gerek yok.
-            # (Eski netsh çağrısı timeout'suzdu ve bazen "Başlat"ı asıyordu.)
-            self._voting_info = res
-            # if a game is already running, surface it immediately (name only)
-            if self._active_game_id and self._active_game_id in self._games:
-                g = self._games[self._active_game_id]
-                try:
-                    self._voting.set_current({"id": self._active_game_id,
-                                              "name": g.get("name") or self._active_game_id})
-                except Exception:
-                    pass
-        return res
+            try:
+                from backend.voting_server import VotingServer
+            except Exception:
+                from voting_server import VotingServer
+            cfg = self._voting_cfg()
+            # voter sayfası organizatörün temasıyla servis edilir
+            full_cfg = self._load_config()
+            theme = full_cfg.get("theme", {}) or {}
+            lang = (full_cfg.get("jam", {}) or {}).get("language", "tr")
+            # değiştirilmemiş varsayılan kategori/grup etiketlerini jam diline çevir
+            localize_vote_defaults(cfg, lang)
+            brand = {
+                "jamName": (full_cfg.get("jam", {}) or {}).get("name", ""),
+                "colors": theme.get("colors", {}) or {},
+                "radius": theme.get("radius"),
+                "glow": theme.get("glow"),
+                "language": lang,
+            }
+            if self._voting is not None and self._voting.is_running:
+                self._voting.stop()
+            self._voting = VotingServer()
+            res = self._voting.start(port=int(cfg.get("port", 8770)), config=cfg, brand=brand)
+            self._voting_info = res if res.get("ok") else {}
+            if res.get("ok"):
+                # NOT: Windows Firewall (LAN) kuralı KALDIRILDI — online oylama tünelden
+                # (localhost) çalışır, loopback firewall'dan muaf → inbound kurala gerek yok.
+                self._voting_info = res
+                # if a game is already running, surface it immediately (name only)
+                if self._active_game_id and self._active_game_id in self._games:
+                    g = self._games[self._active_game_id]
+                    try:
+                        self._voting.set_current({"id": self._active_game_id,
+                                                  "name": g.get("name") or self._active_game_id})
+                    except Exception:
+                        pass
+            return res
+        except Exception as e:
+            import traceback
+            self._log_exc("startVoting", traceback.format_exc())
+            return {"ok": False, "error": "start_failed", "detail": str(e)}
 
     def stopVoting(self):
         self._stop_tunnel()

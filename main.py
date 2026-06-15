@@ -47,7 +47,13 @@ def main():
         text_select=False,
     )
     api.set_window(window)
-    webview.start(debug="--debug" in sys.argv)
+    # gui="edgechromium" ZORUNLU: WebView2 yoksa pywebview sessizce eski IE/MSHTML
+    # motoruna düşüp modern JS'i çalıştıramaz (siyah ekran / kilitlenme). edgechromium
+    # zorlanınca WebView2 eksikse net hata verir (kurulum WebView2'yi zaten yükler).
+    try:
+        webview.start(gui="edgechromium", debug="--debug" in sys.argv)
+    except Exception:
+        webview.start(debug="--debug" in sys.argv)   # son çare: varsayılan motor
 
 
 if __name__ == "__main__":

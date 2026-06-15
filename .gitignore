@@ -35,3 +35,6 @@ version_info.txt
 
 # test tarafından üretilen geçici ekran görüntüleri
 tests/_*.png
+
+# kullanıcının yerel teşhis notları
+sorunlar ve çözümleri/

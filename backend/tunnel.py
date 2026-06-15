@@ -15,7 +15,13 @@ import json
 import time
 import threading
 import subprocess
+import webbrowser
 import urllib.request
+
+# --noconsole (.exe) build'de geçerli bir stdin handle'ı yoktur; alt işlemler
+# geçersiz stdin miras alırsa I/O/prompt beklerken DEADLOCK'a girebilir. Bu yüzden
+# TÜM subprocess çağrılarında stdin=DEVNULL kullanılır.
+_DEVNULL = subprocess.DEVNULL
 
 # Resmi stabil doğrudan indirme bağlantısı (~18 MB)
 CF_DOWNLOAD_URL = ("https://github.com/cloudflare/cloudflared/releases/latest/"
@@ -87,7 +93,7 @@ class Tunnel:
                     "--url", "http://localhost:%d" % int(local_port)]
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         self.proc = subprocess.Popen(
-            _cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            _cmd, stdin=_DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace",
             creationflags=flags, bufsize=1)
         found = threading.Event()
@@ -156,7 +162,9 @@ def ensure_tailscale(progress_cb=None, timeout=300):
     msi = os.path.join(tools_dir(), "tailscale-setup.msi")
     tmp = msi + ".part"
     req = urllib.request.Request(TS_MSI_URL, headers={"User-Agent": "JamDeck"})
-    with urllib.request.urlopen(req, timeout=60) as r:
+    # bağlantı kurma timeout'u (indirmenin TAMAMI değil) — yavaş ağ/Sandbox'ta
+    # 60 sn'lik sabit limit büyük MSI'yi yarıda kesip çöküyordu.
+    with urllib.request.urlopen(req, timeout=120) as r:
         total = int(r.headers.get("Content-Length") or 0)
         done = 0
         with open(tmp, "wb") as f:
@@ -171,8 +179,10 @@ def ensure_tailscale(progress_cb=None, timeout=300):
     os.replace(tmp, msi)
     # yükseltilmiş sessiz kurulum — TEK UAC penceresi (sürücü+servis kurar)
     import ctypes
+    # /passive (görünür ilerleme çubuğu) — /qn (tam sessiz) Sandbox/UAC'de otomatik
+    # reddedilebiliyordu; SW_SHOWNORMAL ile UAC/pencere görünür.
     rc = ctypes.windll.shell32.ShellExecuteW(
-        None, "runas", "msiexec", '/i "%s" /qn /norestart' % msi, None, 0)
+        None, "runas", "msiexec", '/i "%s" /passive /norestart' % msi, None, 1)
     if rc <= 32:
         raise RuntimeError("tailscale_install_declined")
     exe = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"),
@@ -187,20 +197,44 @@ def ensure_tailscale(progress_cb=None, timeout=300):
 
 
 def tailscale_up():
-    """Giriş akışını tetikle (Tailscale tarayıcıda oturum açtırır). Engellemez."""
+    """Giriş akışını tetikle. `tailscale up` oturum yoksa konsola
+    `To authenticate, visit: https://login.tailscale.com/...` basar. Çıktıyı
+    DEVNULL'a yutmak yerine PIPE ile okuyup login URL'sini VARSAYILAN TARAYICIDA
+    otomatik açarız (aksi halde link kaybolur, kullanıcı oturum açamaz → kilitlenme).
+    Engellemez (okuma ayrı thread'de)."""
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
-        subprocess.Popen([tailscale_path(), "up"], creationflags=flags,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        proc = subprocess.Popen([tailscale_path(), "up"], creationflags=flags,
+                                stdin=_DEVNULL, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True,
+                                encoding="utf-8", errors="replace", bufsize=1)
     except Exception:
-        pass
+        return
+
+    def _read():
+        opened = False
+        try:
+            for line in proc.stdout:
+                if not opened:
+                    u = _extract_login_url(line)
+                    if u:
+                        opened = True
+                        _tunlog("login url: " + u)
+                        try:
+                            webbrowser.open(u)
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+    threading.Thread(target=_read, daemon=True).start()
 
 
 def _run_ts(args, timeout=20):
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     return subprocess.run([tailscale_path()] + args, capture_output=True, text=True,
                           encoding="utf-8", errors="replace", timeout=timeout,
-                          creationflags=flags)
+                          stdin=_DEVNULL, creationflags=flags)
 
 
 def tailscale_state():
@@ -346,8 +380,8 @@ def funnel_start(local_port, timeout=75):
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
         subprocess.Popen([tailscale_path(), "funnel", "--bg", str(port)],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         creationflags=flags)
+                         stdin=_DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, creationflags=flags)
     except Exception as e:
         raise RuntimeError("funnel_start_failed: %s" % e)
 

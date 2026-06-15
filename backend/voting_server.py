@@ -16,9 +16,34 @@ try:
 except ImportError:
     from voter_page import VOTER_PAGE, CODES_PAGE
 
-MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-VOTES_FILE = os.path.join(MODULE_DIR, "votes.json")
-ACCESS_FILE = os.path.join(MODULE_DIR, "access.json")
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))   # paket içi (salt-okunur) kaynaklar
+
+
+def data_dir():
+    """Yazılabilir veri yolu (%LOCALAPPDATA%\\JamDeck\\data) — frozen build'de
+    _internal'a YAZILMAZ (eski MODULE_DIR yolu .exe'de yazma hatası → hang verirdi)."""
+    base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+    d = os.path.join(base, "JamDeck", "data")
+    try:
+        os.makedirs(d, exist_ok=True)
+    except OSError:
+        pass
+    return d
+
+
+DATA_DIR = data_dir()
+VOTES_FILE = os.path.join(DATA_DIR, "votes.json")
+ACCESS_FILE = os.path.join(DATA_DIR, "access.json")
+
+# eski sürüm dosyalarını (backend yanı) yeni veri dizinine bir kez taşı
+for _old, _new in ((os.path.join(MODULE_DIR, "votes.json"), VOTES_FILE),
+                   (os.path.join(MODULE_DIR, "access.json"), ACCESS_FILE)):
+    try:
+        if os.path.exists(_old) and not os.path.exists(_new) \
+                and os.path.abspath(_old) != os.path.abspath(_new):
+            shutil.copy2(_old, _new)
+    except OSError:
+        pass
 
 import sys as _sys
 _I18N_CACHE = None
@@ -227,9 +252,12 @@ class VotingServer:
         self._load_access()
         self._sync_codes()
 
+        # 127.0.0.1'e bind: online oylama Tailscale Funnel ile localhost'tan servis edilir.
+        # 0.0.0.0 (tüm arayüzler) Windows güvenlik duvarı pop-up'ını tetikler; bu pop-up
+        # PyWebView penceresinin ARKASINDA kalıp socket bind'i bloklayarak "Başlat"ı asardı.
         for attempt in range(10):
             try:
-                self.httpd = ThreadingHTTPServer(("0.0.0.0", port), self._create_handler())
+                self.httpd = ThreadingHTTPServer(("127.0.0.1", port), self._create_handler())
                 break
             except OSError:
                 port += 1
@@ -598,7 +626,7 @@ class VotingServer:
             return
         self._last_snapshot = now
         try:
-            d = os.path.join(MODULE_DIR, "vote_backups")
+            d = os.path.join(DATA_DIR, "vote_backups")
             os.makedirs(d, exist_ok=True)
             ts = time.strftime("%Y%m%d-%H%M%S")
             with open(os.path.join(d, "votes-%s.json" % ts), "w", encoding="utf-8") as f:

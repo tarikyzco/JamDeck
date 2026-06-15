@@ -66,8 +66,10 @@ Português · 日本語.
 
 ## 📖 User Guide
 
-Step-by-step interactive guide: **[JamDeck Guide](JamDeck-Guide.html)**
-(download and open in a browser — currently in Turkish).
+### ➡️ **[Open JamDeck Guide (one click)](https://tarikyzco.github.io/JamDeck/JamDeck-Guide.html)**
+
+Step-by-step interactive guide — all screens, FAQ and tips. Opens directly in your browser
+(currently in Turkish); you can also download it for offline use.
 
 ## ℹ️
 

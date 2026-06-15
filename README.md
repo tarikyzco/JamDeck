@@ -65,8 +65,10 @@ Português · 日本語.
 
 ## 📖 Kullanım Rehberi
 
-Adım adım interaktif rehber: **[JamDeck Guide](JamDeck-Guide.html)**
-(indirip tarayıcıda açın — tüm ekranlar, SSS ve ipuçları içinde).
+### ➡️ **[JamDeck Guide'ı aç (tek tık)](https://tarikyzco.github.io/JamDeck/JamDeck-Guide.html)**
+
+Adım adım interaktif rehber — tüm ekranlar, SSS ve ipuçları içinde. Tarayıcıda doğrudan açılır;
+indirip çevrimdışı da kullanabilirsiniz.
 
 ## ℹ️
 

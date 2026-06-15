@@ -7,9 +7,9 @@
 # 🎮 JamDeck
 
 **All-in-one desktop toolkit for running game jams** — downloads builds from
-itch.io, presents them on stage, runs weighted LAN voting from phones, reveals
-results, and puts a themed 48-hour countdown on the venue screen. Works fully
-offline (only downloading and updates need internet), customizable for any jam.
+itch.io, presents them on stage, runs weighted **online** voting from phones
+(fixed link/QR, stable up to ~500 people), reveals results with a cinematic
+ceremony, and puts a themed 48-hour countdown on the venue screen. Customizable for any jam.
 Available in **7 languages** — Türkçe · English · Français · Deutsch · Español ·
 Português · 日本語.
 
@@ -66,7 +66,7 @@ Português · 日本語.
 
 ## 📖 User Guide
 
-Step-by-step interactive guide: **[JamDeck-Rehber.html](JamDeck-Rehber.html)**
+Step-by-step interactive guide: **[JamDeck Guide](JamDeck-Guide.html)**
 (download and open in a browser — currently in Turkish).
 
 ## ℹ️

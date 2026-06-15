@@ -7,9 +7,9 @@
 # 🎮 JamDeck
 
 **Game jam'ler için hepsi-bir-arada masaüstü yönetim uygulaması** — oyunları
-itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıklar ve
-48 saatlik geri sayımı mekan ekranına yansıtır. Tamamen çevrimdışı çalışır
-(yalnız indirme ve güncelleme internet ister), her jam'e göre özelleştirilir.
+itch.io'dan indirir, sahnede sunar, telefonlardan **online** oylatır (sabit link/QR,
+~500 kişiye kadar stabil), sonuçları sinematik bir törenle açıklar ve 48 saatlik geri
+sayımı mekan ekranına yansıtır. Her jam'e göre tamamen özelleştirilir.
 **7 dilde** kullanılabilir — Türkçe · English · Français · Deutsch · Español ·
 Português · 日本語.
 
@@ -65,7 +65,7 @@ Português · 日本語.
 
 ## 📖 Kullanım Rehberi
 
-Adım adım interaktif rehber: **[JamDeck-Rehber.html](JamDeck-Rehber.html)**
+Adım adım interaktif rehber: **[JamDeck Guide](JamDeck-Guide.html)**
 (indirip tarayıcıda açın — tüm ekranlar, SSS ve ipuçları içinde).
 
 ## ℹ️

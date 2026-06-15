@@ -17,6 +17,9 @@ backend/jam_settings.json
 backend/votes.json
 backend/access.json
 backend/game_overrides.json
+backend/*.json.bak
+backend/*.json.tmp
+backend/vote_backups/
 
 # büyük yerel varlıklar
 AyazJam Logo.png
@@ -29,3 +32,6 @@ AyazJam Logo.ico
 
 # build sirasinda uretilir (build_release.ps1)
 version_info.txt
+
+# test tarafından üretilen geçici ekran görüntüleri
+tests/_*.png

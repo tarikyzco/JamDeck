@@ -61,7 +61,7 @@ offline (only downloading and updates need internet), customizable for any jam.
 
 ## 📖 User Guide
 
-Step-by-step interactive guide: **[JamDeck-Rehber.html](JamDeck-Rehber.html)**
+Step-by-step interactive guide: **[JamDeck Guide](JamDeck-Guide.html)**
 (download and open in a browser — currently in Turkish).
 
 ## ℹ️

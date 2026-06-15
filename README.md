@@ -60,7 +60,7 @@ itch.io'dan indirir, sahnede sunar, LAN üzerinden oylatır, sonuçları açıkl
 
 ## 📖 Kullanım Rehberi
 
-Adım adım interaktif rehber: **[JamDeck-Rehber.html](JamDeck-Rehber.html)**
+Adım adım interaktif rehber: **[JamDeck Guide](JamDeck-Guide.html)**
 (indirip tarayıcıda açın — tüm ekranlar, SSS ve ipuçları içinde).
 
 ## ℹ️

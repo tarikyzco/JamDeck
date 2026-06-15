@@ -180,6 +180,8 @@ h1,h2,h3{font-family:var(--font-display)}
   border:2px solid color-mix(in srgb,currentColor 30%,transparent);
   border-top-color:currentColor;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.links-loading{display:flex;align-items:center;gap:10px;padding:16px 4px;color:var(--text-muted);font-size:12.5px}
+.links-loading::before{content:"";width:16px;height:16px;flex:0 0 16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--text-muted) 30%,transparent);border-top-color:var(--accent);animation:spin .7s linear infinite}
 .btn-dashed{border:1.5px dashed var(--border); color:var(--text-muted); width:100%; justify-content:center}
 .btn-dashed:hover{border-color:var(--accent); color:var(--accent)}
 
@@ -223,6 +225,9 @@ input[type=number]{-moz-appearance:textfield; appearance:textfield}
   background-size:5px 5px; background-position:calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-repeat:no-repeat; padding-right:32px;
 }
 .select option{background:var(--surface);color:var(--text)}
+/* dil seçici — kompakt, otomatik genişlik */
+.select-lang{width:auto; min-width:130px; padding-top:7px; padding-bottom:7px; font-size:13px; font-weight:600}
+.side-lang{flex:1; min-width:0; font-size:12.5px; padding-top:6px; padding-bottom:6px}
 .input-wrap{position:relative; display:flex; align-items:center}
 .input-wrap .input{padding-right:38px}
 .input-eye{
@@ -440,6 +445,8 @@ body.kiosk-mode .sidebar{display:none}
 .group-row{display:grid; grid-template-columns:auto 1fr; gap:6px 10px; padding:10px 0; border-bottom:1px solid color-mix(in srgb, var(--border) 60%, transparent)}
 .group-row:last-of-type{border-bottom:none; padding-bottom:2px}
 .group-row.off .g-controls{opacity:.45; pointer-events:none}
+.vg-lock-note{font-size:11.5px; color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent); border:1px solid color-mix(in srgb, var(--accent) 28%, transparent); border-radius:var(--radius-sm); padding:6px 10px; margin-bottom:8px; line-height:1.4}
+.group-row .seg button:disabled,.group-row .g-extra input:disabled{opacity:.5; cursor:not-allowed}
 .group-row .g-head{display:flex; align-items:center; gap:9px; grid-column:1/-1}
 .group-row .g-name{font-weight:800; font-size:13px; display:flex; align-items:center; gap:7px}
 .group-row .g-name .dot{width:8px; height:8px; border-radius:50%}
@@ -508,7 +515,8 @@ body.kiosk-mode .sidebar{display:none}
 .pod .medal{font-size:26px; line-height:1}
 .pod .p-cover{
   width:100%; aspect-ratio:16/9; border-radius:9px; border:1px solid var(--border);
-  background-color:var(--bg-2); background-size:cover; background-position:center;
+  background-color:var(--bg-2); background-size:contain; background-position:center;
+  background-repeat:no-repeat;   /* kapak TAM görünsün, kesilmesin */
 }
 .pod .p-team{font:700 10px var(--font-body); letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted)}
 .pod .p-name{font-family:var(--font-display); font-weight:800; font-size:17px; letter-spacing:-.01em; line-height:1.15}
@@ -552,6 +560,108 @@ body.kiosk-mode .sidebar{display:none}
 .rank-row .score-badge{justify-self:end; font-size:13px}
 .rank-list[hidden],.podium-wrap[hidden]{display:none}
 .results-empty{padding:60px 20px}
+
+/* ─────────────── SONUÇ SPOILER KAPISI (tümünü / adım adım) ─────────────── */
+.res-gate{display:flex; flex-direction:column; align-items:center; gap:22px; padding:30px 20px 46px; text-align:center}
+.res-gate .rg-head{display:flex; flex-direction:column; align-items:center; gap:6px}
+.res-gate h2{font-size:24px; font-weight:800; letter-spacing:-.01em}
+.res-gate .rg-sub{color:var(--text-muted); font-size:13.5px}
+.rg-choices{display:grid; grid-template-columns:1fr 1fr; gap:16px; width:100%; max-width:680px}
+.rg-card{
+  display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; text-align:center;
+  padding:28px 20px; border-radius:var(--radius); border:1px solid var(--border);
+  background:color-mix(in srgb, var(--surface-2) 80%, transparent);
+  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.rg-card:hover{transform:translateY(-3px); border-color:color-mix(in srgb, var(--accent) 50%, var(--border)); box-shadow:var(--glow)}
+.rg-card .rg-ic{font-size:36px; line-height:1}
+.rg-card b{font-size:16px; font-family:var(--font-display)}
+.rg-card span{font-size:12px; color:var(--text-muted); line-height:1.4}
+.rg-card.active{border-color:color-mix(in srgb, var(--accent) 55%, var(--border)); box-shadow:var(--glow); background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 9%,transparent), transparent 60%), color-mix(in srgb,var(--surface-2) 85%,transparent)}
+.rg-depth{display:flex; flex-direction:column; gap:14px; align-items:center; width:100%; max-width:520px; animation:fadeUp .35s ease both}
+.rg-depth[hidden]{display:none}
+.rg-custom{display:flex; align-items:center; gap:9px; font-size:13px; color:var(--text-muted)}
+.rg-custom[hidden]{display:none}
+.rg-custom input{width:90px; text-align:center; padding:9px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--text); font:700 16px var(--font-mono)}
+
+/* ─────────────────────── ÖDÜL TÖRENİ (sinematik sahne) ─────────────────────── */
+#screen-ceremony{max-width:none; padding:0; height:100vh; overflow:hidden; position:relative; background:var(--bg)}
+#screen-ceremony.active{display:block}
+#cerFx{position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none}
+#cerBurst{position:absolute; inset:0; width:100%; height:100%; z-index:4; pointer-events:none}
+.cer-flash{position:absolute; inset:0; z-index:3; background:#fff; opacity:0; pointer-events:none}
+.cer-flash.go{animation:cerFlash .7s ease-out}
+.cer-wrap{position:relative; z-index:1; width:100%; height:100%; display:flex; flex-direction:column}
+.cer-stage{flex:1; display:flex; align-items:center; justify-content:center; padding:34px; position:relative; overflow:hidden; cursor:pointer}
+.cer-intro{display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center; animation:cerSlideUp .55s ease both}
+.cer-intro img{max-height:150px; max-width:min(440px,56vw); object-fit:contain; filter:drop-shadow(0 12px 36px color-mix(in srgb,var(--bg) 75%,transparent))}
+.cer-intro h1{font-size:clamp(34px,6.5vw,72px); font-weight:900; letter-spacing:.05em; line-height:1;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.cer-intro .hint{color:var(--text-muted); font-size:15px; animation:cerHintPulse 2s ease-in-out infinite}
+/* merkez açıklama kartı */
+.cer-reveal{display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; max-width:min(760px,84vw)}
+.cer-reveal .cer-badge{display:flex; align-items:center; justify-content:center; gap:14px}
+.cer-reveal .cer-medal{font-size:clamp(46px,9vw,104px); line-height:1; filter:drop-shadow(0 6px 18px color-mix(in srgb,var(--bg) 70%,transparent))}
+.cer-reveal .cer-rank{font:900 clamp(54px,11vw,140px)/.85 var(--font-mono); letter-spacing:-.04em; color:var(--accent)}
+.cer-reveal .cer-rank small{font-size:.42em; opacity:.7; font-weight:800}
+.cer-reveal .cer-cover{
+  width:min(460px,68vw); aspect-ratio:16/9; border-radius:16px; border:1px solid var(--border);
+  background:var(--bg-2) center/contain no-repeat;
+  box-shadow:0 22px 70px color-mix(in srgb,var(--bg) 82%,transparent); position:relative; overflow:hidden;
+}
+.cer-reveal .cer-cover.ph{display:flex; align-items:center; justify-content:center; font-size:46px; opacity:.4}
+.cer-reveal .cer-team{font:700 13px var(--font-body); letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted)}
+.cer-reveal .cer-name{font-family:var(--font-display); font-weight:900; font-size:clamp(28px,5.4vw,58px); line-height:1.04; letter-spacing:-.01em}
+.cer-reveal .cer-score{font:800 clamp(18px,2.6vw,26px) var(--font-mono); padding:7px 22px; border-radius:999px;
+  background:color-mix(in srgb,var(--accent) 16%,transparent); border:1px solid color-mix(in srgb,var(--accent) 42%,transparent); color:var(--accent)}
+.cer-reveal .cer-score small{font-size:.62em; opacity:.7}
+/* açıklanmış dereceler — sağ kenar mini liste */
+.cer-mini{position:absolute; right:28px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:7px; width:min(290px,25vw); max-height:88vh; overflow:hidden}
+.cer-mini[hidden]{display:none}
+.cer-mini .cm-row{display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:10px; padding:8px 12px;
+  border-radius:var(--radius-sm); background:color-mix(in srgb,var(--surface-2) 78%,transparent); border:1px solid var(--border); animation:cerMiniIn .4s ease both}
+.cer-mini .cm-rk{font:800 16px var(--font-mono); color:var(--text-muted); text-align:center}
+.cer-mini .cm-name{font-weight:700; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.cer-mini .cm-sc{font:700 12px var(--font-mono); color:var(--accent)}
+/* alt kontrol çubuğu */
+.cer-controls{display:flex; align-items:center; justify-content:center; gap:16px; padding:18px; z-index:2}
+.cer-count{font:700 14px var(--font-mono); color:var(--text-muted); min-width:64px; text-align:center}
+#cerShowAll{font-size:16px; padding:13px 32px}
+#cerShowAll[hidden]{display:none}
+/* bronz/gümüş/altın vurgu renkleri */
+.cer-reveal.r-bronze .cer-rank,.cer-reveal.r-bronze .cer-score{color:#cd7f32; border-color:color-mix(in srgb,#cd7f32 50%,transparent); background:color-mix(in srgb,#cd7f32 16%,transparent)}
+.cer-reveal.r-silver .cer-rank,.cer-reveal.r-silver .cer-score{color:#c0c8d4; border-color:color-mix(in srgb,#c0c8d4 50%,transparent); background:color-mix(in srgb,#c0c8d4 14%,transparent)}
+.cer-reveal.r-gold .cer-name{background:linear-gradient(90deg,#ffd700,#ffae00,#fff1a8,#ffd700); -webkit-background-clip:text; background-clip:text; color:transparent; animation:cerGoldShimmer 3s linear infinite; background-size:220% auto}
+.cer-reveal.r-gold .cer-score{color:#1a1300; background:linear-gradient(90deg,#ffd700,#ffae00); border-color:#ffd700; box-shadow:0 0 26px color-mix(in srgb,#ffd700 55%,transparent)}
+.cer-reveal.r-gold .cer-cover{box-shadow:0 0 0 3px #ffd700, 0 26px 90px color-mix(in srgb,#ffd700 35%,transparent); animation:cerGlowPulse 2.4s ease-in-out infinite}
+.cer-reveal.r-gold{transform:scale(1.04)}
+/* dereceye göre giriş animasyonları (1.'ye doğru yoğunlaşır) */
+.cer-anim-up{animation:cerSlideUp .55s cubic-bezier(.2,.8,.2,1) both}
+.cer-anim-flip{animation:cerFlip .6s cubic-bezier(.2,.8,.2,1) both}
+.cer-anim-bronze{animation:cerBronze .7s cubic-bezier(.18,.9,.25,1.1) both}
+.cer-anim-silver{animation:cerSilver .8s cubic-bezier(.18,.9,.25,1.05) both}
+.cer-anim-gold{animation:cerGold 1.05s cubic-bezier(.16,.85,.2,1.05) both}
+/* gümüşte kapak üzerinde ışık süpürmesi */
+.cer-anim-silver .cer-cover::after,.cer-anim-gold .cer-cover::after{
+  content:""; position:absolute; top:0; bottom:0; width:55%;
+  background:linear-gradient(100deg,transparent,color-mix(in srgb,#fff 75%,transparent),transparent);
+  transform:translateX(-150%); animation:cerSweep 1.1s .35s ease-out}
+@keyframes cerSlideUp{from{opacity:0; transform:translateY(46px)} to{opacity:1; transform:none}}
+@keyframes cerMiniIn{from{opacity:0; transform:translateX(34px)} to{opacity:1; transform:none}}
+@keyframes cerFlip{from{opacity:0; transform:perspective(1000px) rotateX(82deg)} to{opacity:1; transform:perspective(1000px) rotateX(0)}}
+@keyframes cerBronze{0%{opacity:0; transform:scale(.5) rotate(-7deg)} 55%{opacity:1; transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0)}}
+@keyframes cerSilver{0%{opacity:0; transform:scale(.45)} 45%{opacity:1} 62%{transform:scale(1.12)} 78%{transform:scale(.97)} 100%{transform:scale(1)}}
+@keyframes cerGold{0%{opacity:0; transform:scale(.2)} 45%{opacity:1} 66%{transform:scale(1.22)} 82%{transform:scale(.99)} 100%{transform:scale(1.04)}}
+@keyframes cerFlash{0%{opacity:0} 10%{opacity:.92} 100%{opacity:0}}
+@keyframes cerGlowPulse{0%,100%{box-shadow:0 0 0 3px #ffd700, 0 26px 90px color-mix(in srgb,#ffd700 22%,transparent)} 50%{box-shadow:0 0 0 3px #ffe55c, 0 26px 120px color-mix(in srgb,#ffd700 55%,transparent)}}
+@keyframes cerSweep{from{transform:translateX(-150%)} to{transform:translateX(260%)}}
+@keyframes cerGoldShimmer{to{background-position:220% center}}
+@keyframes cerHintPulse{0%,100%{opacity:.5} 50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .cer-anim-up,.cer-anim-flip,.cer-anim-bronze,.cer-anim-silver,.cer-anim-gold{animation-duration:.25s}
+  .cer-anim-silver .cer-cover::after,.cer-anim-gold .cer-cover::after,.cer-reveal.r-gold .cer-name,.cer-reveal.r-gold .cer-cover{animation:none}
+  .cer-intro .hint{animation:none}
+}
 
 /* ─────────────────────────── EKRAN 5 · KILAVUZ ─────────────────────────── */
 .guide-grid{display:grid; grid-template-columns:1fr 300px; gap:14px; align-items:start}
@@ -727,6 +837,10 @@ textarea.gedit{resize:vertical; min-height:38px; font:inherit; line-height:1.5}
 
 /* ─────────────────────────── SAYAÇ (GERİ SAYIM) ─────────────────────────── */
 #screen-countdownstage{max-width:none; padding:0; height:100vh; overflow:hidden}
+/* sonuç tam-ekran sahnesi (sahneye yansıt) — uzun liste için kaydırılabilir */
+#screen-resultstage{max-width:none; padding:0; height:100vh; overflow:auto}
+#screen-resultstage.active{display:flex; justify-content:center}
+.res-stage-full{width:100%; max-width:1080px; margin:auto; padding:54px 28px}
 .cd-stage{position:relative; height:100vh; display:flex; flex-direction:column;
   align-items:center; justify-content:space-between; padding:4vh 4vw; overflow:hidden}
 .cd-logos{width:100%; display:grid; grid-template-columns:1fr auto 1fr; align-items:start; gap:24px}
@@ -861,6 +975,8 @@ textarea.gedit{resize:vertical; min-height:38px; font:inherit; line-height:1.5}
 <div class="bg-veil"></div>
 <div id="app"></div>
 
+<!-- TEK KAYNAK arayüz metinleri (launcher + oy + sayaç); ana script'ten ÖNCE yüklenir -->
+<script src="i18n.js"></script>
 <script>
 /* ===== src/icons.js ===== */
 /* ============================================================
@@ -1080,609 +1196,42 @@ function applyConfig(config){
    JamDeck — STRINGS (i18n)  default = tr
    ============================================================ */
 
-const STRINGS = {
-  tr:{
-    // brand / nav
-    brand_sub:"OYUN JAMI",
-    nav_download:"İndir",
-    nav_launch:"Sunum",
-    nav_voting:"Oylama",
-    nav_results:"Sonuçlar",
-    nav_guide:"Kılavuz",
-    nav_setup:"Kurulum",
-    settings:"Ayarlar",
-    version:"Sürüm",
+/* arayüz metinleri tek kaynaktan: frontend/i18n.js (window.JAMDECK_I18N) — her dilin 'app' bölümü */
+let STRINGS = (function(){ const d=(window.JAMDECK_I18N)||{}, o={}; for(const l in d) o[l]=d[l].app||{}; return o; })();
 
-    // Ana — İndir + Hazırla
-    dl_title:"İndir & Hazırla",
-    dl_sub:"Jam linkini girin; indirme biter bitmez açma ve düzenleme otomatik başlar.",
-    source_title:"Kaynak",
-    status_title:"Durum",
-    console_title:"Konsol",
-    target_folder:"Hedef klasör",
-    jam_url:"Jam URL",
-    api_key:"itch.io API anahtarı",
-    start_download:"İndir ve Hazırla",
-    integrity_check:"Bütünlük Kontrolü",
-    cancel:"İptal",
-    working:"Çalışıyor…",
-    now_downloading:"şu an",
-    speed:"Hız",
-    games_count:"oyun",
-    dl_done:"Tüm indirmeler tamamlandı",
-    verify_done:"Doğrulama tamamlandı",
-    org_done:"Düzenleme tamamlandı",
-    stage_download:"İndiriliyor",
-    stage_extract:"Açılıyor",
-    stage_organize:"Düzenleniyor",
-    stage_ready:"Hazır",
-    st_idle:"Beklemede",
-    st_running:"Çalışıyor",
-    st_done:"Tamamlandı",
-    st_error:"Hata",
-    sum_extracted:"açıldı",
-    sum_fixed:"düzeltildi",
-    sum_removed:"temizlendi",
-    open_folder:"Klasörü Aç",
-
-    // Sunum
-    present_title:"Sunum",
-    present_sub:"Oyunları jüri önünde tam ekran başlatın — her sunum süreyle sınırlı.",
-    games:"OYUNLAR",
-    search_games:"Oyun veya takım ara…",
-    refresh:"Listeyi Yenile",
-    time_limit:"Süre",
-    min_unit:"dk",
-    play:"Sunumu Başlat",
-    switch_exe:"EXE Değiştir",
-    engine_web:"🌐 Web Oyunu",
-    broken_label:"Bozuk/Eksik",
-    unplayable_label:"Oynanamaz",
-    edit_name:"Düzenle",
-    edit_game_ph:"Oyun adı:",
-    edit_team_ph:"Takım adı:",
-    edit_saved:"Kaydedildi",
-    edit_fail:"Kaydedilemedi",
-    no_games_title:"Henüz oyun yok",
-    no_games_sub:"Ana ekrandan jam oyunlarını indirin.",
-    exit_full:"Tam ekrandan çık",
-    engine:"Motor",
-    team:"Takım",
-
-    // Timer
-    times_up:"SÜRE BİTTİ",
-    closing_in:"kapatılıyor",
-
-    // Modals
-    reset_q:"Varsayılanlara sıfırlansın mı?",
-    reset_sub:"Tüm tema ve yapılandırma değişiklikleri kaybolacak.",
-    confirm:"Onayla",
-
-    // Setup
-    setup_title:"Kurulum",
-    setup_sub:"Tema, renkler, arka plan efekti, marka ve sunum davranışı.",
-    sec_identity:"Marka",
-    sec_theme:"Tema Presetleri",
-    sec_custom:"Özel Renkler & Şekil",
-    sec_effect:"Arka Plan Efekti",
-    sec_behavior:"Sunum / Launcher",
-    sec_folders:"Yollar",
-    theme_live_hint:"canlı önizleme — tıklayın",
-    jam_name:"Jam adı",
-    jam_tagline:"Slogan",
-    name_size:"İsim boyutu",
-    tag_size:"Slogan boyutu",
-    name_font:"İsim fontu",
-    tag_font:"Slogan fontu",
-    font_default:"Varsayılan (tema)",
-    dz_logo_t:"Logo yükle",
-    dz_logo_s:"PNG · şeffaf önerilir",
-    dz_bg_t:"Arka plan görseli",
-    dz_bg_s:"1920×1080 önerilir",
-    col_accent:"Accent",
-    col_accent2:"Accent 2",
-    col_bg:"Arka plan",
-    col_surface:"Yüzey",
-    col_text:"Metin",
-    radius:"Köşe yuvarlaklığı",
-    glow:"Parıltı",
-    effect_intensity:"Yoğunluk",
-    effect_enabled:"Efekti aç/kapat",
-    language:"Dil",
-    default_minutes:"Varsayılan süre",
-    default_minutes_sub:"oyun başına sunum süresi",
-    on_timeup:"Süre bitince",
-    on_timeup_sub:"zaman dolduğunda davranış",
-    timeup_kill:"Oyunu kapat",
-    timeup_warn:"Uyarı göster",
-    timeup_return:"Hiçbir şey yapma",
-    kill_delay:"Kapatma gecikmesi",
-    kill_delay_sub:"SÜRE BİTTİ sonrası saniye",
-    kiosk_lock:"Kiosk kilidi",
-    kiosk_lock_sub:"Alt+F4 ve kapatmayı engeller",
-    show_timer:"Zamanlayıcı katmanı",
-    show_timer_sub:"oyun üstünde geri sayım",
-    games_dir:"Oyunlar klasörü",
-    change:"Seç",
-    open_short:"Aç",
-    save:"Kaydet",
-    reset_defaults:"Varsayılana dön",
-    export_config:"Dışa Aktar",
-    import_config:"İçe Aktar",
-    saved_ok:"Yapılandırma kaydedildi",
-    reset_ok:"Varsayılanlara sıfırlandı",
-    exported_ok:"Yapılandırma dışa aktarıldı",
-
-    // Kılavuz
-    guide_title:"Teslim Kılavuzu",
-    guide_sub:"Katılımcılara paylaşılan tek sayfa — kurallar kısa ve net.",
-    guide_main:"Oyununuzun <em>WINDOWS (.exe)</em> veya <em>WEB (HTML5)</em> build'ini itch.io'ya yükleyin.",
-    guide_main_sub:"İkisini birden yüklerseniz daha da iyi: oyun hem sahnede sorunsuz açılır hem telefonlardan denenebilir.",
-    tile_win_t:"Windows build",
-    tile_win_s:".exe + gerekli dosyalar, tek zip içinde",
-    tile_web_t:"Web build (HTML5)",
-    tile_web_s:"itch.io'da \"playable in browser\" işaretli",
-    tip1_t:"Ad + kapak görseli",
-    tip1_s:"itch.io sayfasında oyun adı ve kapak görseli mutlaka dolu olsun.",
-    tip2_t:"Tek temiz arşiv",
-    tip2_s:"Tek zip; iç içe arşiv ve gereksiz dosya olmasın.",
-    tip3_t:"Motor dosyalarına dokunmayın",
-    tip3_s:"_Data, .pck, dll gibi dosyaları silmeyin — oyun açılmaz.",
-    poster_h_a:"Teslim ederken:",
-    poster_em:".EXE veya WEB",
-    poster_li1:"🪟 Windows build (zip)",
-    poster_li2:"🌐 HTML5 build (tarayıcı)",
-    poster_li3:"🖼️ Ad + kapak görseli",
-    poster_li4:"📦 Tek temiz arşiv",
-    poster_note:"1080×1920 dikey poster önizleme",
-    guide_export:"🖼️ Görsel olarak indir",
-    guide_exporting:"Görsel hazırlanıyor…",
-    guide_exported:"Kılavuz görseli kaydedildi",
-    guide_export_fail:"Görsel oluşturulamadı",
-    guide_export_cancel:"Kaydetme iptal edildi",
-    guide_poster_tag:"TESLİM KILAVUZU",
-    guide_edit:"Düzenle",
-    guide_edit_save:"Kaydet",
-    guide_edit_cancel:"Vazgeç",
-    guide_edit_reset:"Varsayılana dön",
-    guide_edit_hint:"Özelleştirilen metin her iki dilde de aynı görünür; alanı boş bırakırsanız varsayılana döner.",
-    guide_saved:"Kılavuz kaydedildi",
-
-    // Sayaç
-    nav_countdown:"Sayaç",
-    cd_title:"Geri Sayım",
-    cd_sub:"Mekan ekranı için tam ekran jam sayacı — başlangıç saatini kurun, gerisi otomatik.",
-    cd_sec_time:"Zaman",
-    cd_start_label:"Başlangıç zamanı",
-    cd_duration:"Süre (saat)",
-    cd_sec_logos:"Logolar",
-    cd_logo_left:"Sol logo",
-    cd_logo_center:"Orta logo (büyük)",
-    cd_logo_right:"Sağ logo",
-    cd_logo_center_hint:"Boş bırakılırsa jam logosu kullanılır",
-    cd_style:"Sayaç stili",
-    cd_arm:"Sayacı kur",
-    cd_armed_hint:"Başlamaya 10 dk kala sahne her ekrandan otomatik açılır.",
-    cd_open_stage:"Sahneyi Aç",
-    cd_phase_pre:"BAŞLAMASINA",
-    cd_phase_main:"KALAN SÜRE",
-    cd_done:"SÜRE DOLDU — TESLİM ZAMANI!",
-    cd_stage_empty:"Başlangıç zamanı ayarlanmadı — Sayaç sekmesinden kurun.",
-    cd_past_warn:"Başlangıç zamanı geçmişte",
-    cd_pick:"Seç",
-    cd_clear:"Kaldır",
-    cd_status_idle:"Zaman ayarlanmadı",
-    cd_status_done:"Süre doldu",
-    cd_obs_title:"Tarayıcı / OBS",
-    cd_obs_start:"Linki Başlat",
-    cd_obs_hint:"URL'yi tarayıcıda açın veya OBS'e \"Browser Source\" olarak ekleyin; şeffaf varyant yayın overlay'i içindir.",
-    cd_obs_open:"Tarayıcıda Aç",
-    cd_obs_transparent:"Şeffaf arka plan",
-    cd_obs_copied:"Link kopyalandı",
-
-    // Güncelleme
-    sec_update:"Güncelleme",
-    upd_current:"Mevcut sürüm",
-    upd_auto:"Açılışta otomatik denetle",
-    upd_check:"Güncellemeleri Denetle",
-    upd_checking:"Denetleniyor…",
-    upd_uptodate:"Uygulama güncel ✓",
-    upd_found:"Yeni sürüm bulundu:",
-    upd_notes:"Sürüm notları",
-    upd_install:"İndir & Kur",
-    upd_downloading:"İndiriliyor…",
-    upd_ready:"İndirildi — kuruluma hazır",
-    upd_apply:"Kur ve Yeniden Başlat",
-    upd_restart_title:"Güncellemeyi Kur",
-    upd_restart_body:"Uygulama kapanacak, güncelleme kurulacak ve yeni sürüm açılacak. Devam edilsin mi?",
-    upd_dev_hint:"Geliştirme modunda otomatik kurulum kapalı — dosyaları elle kopyalayın.",
-    upd_no_repo:"Önce GitHub deposu girin.",
-    upd_err_network:"Sunucuya ulaşılamadı (ağ hatası).",
-    upd_err_no_release:"Depoda yayınlanmış sürüm yok.",
-    upd_err_rate:"GitHub istek limiti aşıldı, sonra deneyin.",
-    upd_err_bad_zip:"Zip içinde uygulama bulunamadı.",
-    upd_err_no_zip:"Önce güncellemeyi indirin.",
-    upd_zip_btn:"Zip'ten Güncelle",
-    upd_toast_found:"Yeni sürüm var — Kurulum ekranından güncelleyin",
-
-    // Oylama
-    vote_title:"Oylama",
-    vote_sub:"Jüri, seyirci ve ekip telefonlarından LAN üzerinden ağırlıklı oy verir.",
-    vote_groups:"Gruplar & Erişim",
-    vote_categories:"Kategoriler",
-    vote_add_cat:"＋ Kategori ekle",
-    vote_weight_hint:"Katsayı kategorinin göreli önemidir (örn. ×0.8'e karşı ×0.4 = iki kat önemli). Final puan yine 10 üzerinden hesaplanır.",
-    vote_server:"Sunucu",
-    vote_port:"Port",
-    vote_start:"Başlat",
-    vote_stop:"Durdur",
-    vote_running:"Çalışıyor",
-    vote_stopped:"Kapalı",
-    vote_links:"Oy Linkleri (telefonla aç / paylaş)",
-    vote_board:"Kod Panosu",
-    vote_coef_edit_hint:"Elle yaz: 1 = ×0.01, 10 = ×0.10, 100 = ×1.00 · ondalık da olur (0.8 = ×0.80) · Enter ile onayla",
-    vote_board_hint:"Gruba bu linki atın: herkes panodan boş bir kod seçer, kullanılan kod anında 'kullanıldı'ya düşer.",
-    vote_scan_hint:"Aynı Wi-Fi ağındaki cihazlar bu adreslere girip oy verebilir.",
-    vote_no_results:"Henüz oy yok.",
-    vote_votes:"oy",
-    vote_current_label:"Şu an sunulan",
-    vote_waiting:"Henüz oyun başlatılmadı — Sunum'dan bir oyun açınca otomatik buraya düşer.",
-    vote_start_fail:"Sunucu başlatılamadı",
-    vote_fw_prompt:"Güvenlik duvarı izni isteniyor — açılan pencerede 'Evet' deyin.",
-    vote_fw_denied:"Güvenlik duvarı izni verilmedi; telefonlar bağlanamayabilir.",
-    vote_access_open:"Açık",
-    vote_access_pin:"PIN",
-    vote_access_codes:"Kodlar",
-    vote_pin_ph:"PIN belirle",
-    vote_limit:"limit",
-    vote_code_count:"kod",
-    vote_show_codes:"Kodları Göster",
-    vote_hide_codes:"Gizle",
-    vote_regen:"Yeniden Üret",
-    vote_copy_all:"Tümünü Kopyala",
-    vote_copied:"Kodlar kopyalandı",
-    vote_code_copied:"Kod kopyalandı",
-    vote_code_copy_hint:"Kopyalamak için tıkla",
-    vote_link_copied:"Oy linki panoya kopyalandı",
-    vote_link_msg:"oy sayfası erişim linki:",
-    vote_qr:"QR Kod",
-    vote_qr_hint:"Telefon kamerasıyla okutun — oy sayfası doğrudan açılır.",
-    vote_qr_fail:"QR kod oluşturulamadı",
-    vote_qr_screen:"QR Ekranı (sahneye yansıt)",
-    qr_stage_empty:"Önce oylama sunucusunu başlatın.",
-    vote_codes_need_server:"Kodları görmek için sunucuyu başlatın.",
-    vote_seat_used:"koltuk dolu",
-    vote_regen_warn:"Eski kodlar ve cihaz eşleşmeleri geçersiz olacak. Yeni kodlar üretilsin mi?",
-    vote_regen_q:"Kodlar yeniden üretilsin mi?",
-    vote_participation:"Katılım",
-    vote_total_votes:"oy",
-    vote_live_hint:"🔒 Skorlar gizli — oylama bitince \"Sonuçlandır\"a basın.",
-    vote_finalize:"🏁 Sonuçları Sonuçlandır",
-    vote_save_png:"🖼️ Görseli Kaydet (PNG)",
-    vote_save_xlsx:"📊 Teknik Dosya (.xlsx)",
-    vote_results_title:"Sonuçlar",
-    vote_no_votes:"Henüz oy yok — sonuçlandırılacak veri yok.",
-    vote_finalized:"Sonuçlar açıklandı",
-    vote_xlsx_saved:"Teknik dosya kaydedildi",
-    vote_xlsx_fail:"Dosya kaydedilemedi",
-    vote_xlsx_cancel:"Kaydetme iptal edildi",
-    vote_png_saved:"Görsel kaydedildi",
-    vote_png_fail:"Görsel kaydedilemedi",
-    vote_reset:"Oylamayı Sıfırla",
-    vote_reset_q:"Oylama sıfırlansın mı?",
-    vote_reset_confirm:"Tüm oylar kalıcı olarak silinir. Bu işlem geri alınamaz.",
-    vote_reset_done:"Oylar sıfırlandı",
-    vote_reset_fail:"Oylar sıfırlanamadı",
-
-    // Sonuçlar ekranı
-    res_title:"Sonuçlar",
-    res_sub:"Sahneye yansıtmalık liderlik görseli — PNG olarak da kaydedilir.",
-    res_top3:"İlk 3",
-    res_top5:"İlk 5",
-    res_all:"Tümü",
-    res_empty_title:"Henüz sonuç yok",
-    res_empty_sub:"Oylama ekranından 🏁 Sonuçlandır'a basın; sonuçlar burada açılır."
-  },
-
-  en:{
-    brand_sub:"GAME JAM",
-    nav_download:"Download",
-    nav_launch:"Present",
-    nav_voting:"Voting",
-    nav_results:"Results",
-    nav_guide:"Guide",
-    nav_setup:"Setup",
-    settings:"Settings",
-    version:"Version",
-
-    dl_title:"Download & Prepare",
-    dl_sub:"Enter the jam link; extracting and organizing start automatically when the download finishes.",
-    source_title:"Source",
-    status_title:"Status",
-    console_title:"Console",
-    target_folder:"Target folder",
-    jam_url:"Jam URL",
-    api_key:"itch.io API key",
-    start_download:"Download & Prepare",
-    integrity_check:"Integrity Check",
-    cancel:"Cancel",
-    working:"Working…",
-    now_downloading:"now",
-    speed:"Speed",
-    games_count:"games",
-    dl_done:"All downloads complete",
-    verify_done:"Verification complete",
-    org_done:"Organization complete",
-    stage_download:"Downloading",
-    stage_extract:"Extracting",
-    stage_organize:"Organizing",
-    stage_ready:"Ready",
-    st_idle:"Idle",
-    st_running:"Running",
-    st_done:"Done",
-    st_error:"Error",
-    sum_extracted:"extracted",
-    sum_fixed:"fixed",
-    sum_removed:"cleaned",
-    open_folder:"Open Folder",
-
-    present_title:"Present",
-    present_sub:"Launch games fullscreen in front of the jury — each presentation is time-boxed.",
-    games:"GAMES",
-    search_games:"Search game or team…",
-    refresh:"Refresh list",
-    time_limit:"Time",
-    min_unit:"min",
-    play:"Start Presentation",
-    switch_exe:"Switch EXE",
-    engine_web:"🌐 Web Game",
-    broken_label:"Broken/Missing",
-    unplayable_label:"Unplayable",
-    edit_name:"Edit",
-    edit_game_ph:"Game name:",
-    edit_team_ph:"Team name:",
-    edit_saved:"Saved",
-    edit_fail:"Could not save",
-    no_games_title:"No games yet",
-    no_games_sub:"Download the jam games from the Home screen.",
-    exit_full:"Exit fullscreen",
-    engine:"Engine",
-    team:"Team",
-
-    times_up:"TIME'S UP",
-    closing_in:"closing in",
-
-    reset_q:"Reset to defaults?",
-    reset_sub:"All theme and configuration changes will be lost.",
-    confirm:"Confirm",
-
-    setup_title:"Setup",
-    setup_sub:"Theme, colors, background effect, brand and presentation behavior.",
-    sec_identity:"Brand",
-    sec_theme:"Theme Presets",
-    sec_custom:"Custom Colors & Shape",
-    sec_effect:"Background Effect",
-    sec_behavior:"Presentation / Launcher",
-    sec_folders:"Paths",
-    theme_live_hint:"live preview — click",
-    jam_name:"Jam name",
-    jam_tagline:"Tagline",
-    name_size:"Name size",
-    tag_size:"Tagline size",
-    name_font:"Name font",
-    tag_font:"Tagline font",
-    font_default:"Theme default",
-    dz_logo_t:"Upload logo",
-    dz_logo_s:"PNG · transparent recommended",
-    dz_bg_t:"Background image",
-    dz_bg_s:"1920×1080 recommended",
-    col_accent:"Accent",
-    col_accent2:"Accent 2",
-    col_bg:"Background",
-    col_surface:"Surface",
-    col_text:"Text",
-    radius:"Corner radius",
-    glow:"Glow",
-    effect_intensity:"Intensity",
-    effect_enabled:"Effect on/off",
-    language:"Language",
-    default_minutes:"Default duration",
-    default_minutes_sub:"presentation time per game",
-    on_timeup:"When time's up",
-    on_timeup_sub:"behavior when time runs out",
-    timeup_kill:"Close the game",
-    timeup_warn:"Show a warning",
-    timeup_return:"Do nothing",
-    kill_delay:"Kill delay",
-    kill_delay_sub:"seconds after TIME'S UP",
-    kiosk_lock:"Kiosk lock",
-    kiosk_lock_sub:"Blocks Alt+F4 / close",
-    show_timer:"Timer overlay",
-    show_timer_sub:"countdown over the game",
-    games_dir:"Games folder",
-    change:"Choose",
-    open_short:"Open",
-    save:"Save",
-    reset_defaults:"Reset to defaults",
-    export_config:"Export",
-    import_config:"Import",
-    saved_ok:"Configuration saved",
-    reset_ok:"Reset to defaults",
-    exported_ok:"Configuration exported",
-
-    guide_title:"Submission Guide",
-    guide_sub:"A single page shared with participants — short, clear rules.",
-    guide_main:"Upload a <em>WINDOWS (.exe)</em> or <em>WEB (HTML5)</em> build of your game to itch.io.",
-    guide_main_sub:"Uploading both is even better: the game runs flawlessly on stage and can be tried from phones.",
-    tile_win_t:"Windows build",
-    tile_win_s:".exe + required files, in a single zip",
-    tile_web_t:"Web build (HTML5)",
-    tile_web_s:"marked \"playable in browser\" on itch.io",
-    tip1_t:"Name + cover image",
-    tip1_s:"Make sure your itch.io page has a game title and a cover image.",
-    tip2_t:"One clean archive",
-    tip2_s:"A single zip; no nested archives or junk files.",
-    tip3_t:"Don't touch engine files",
-    tip3_s:"Don't delete _Data, .pck, dll files — the game won't start.",
-    poster_h_a:"When submitting:",
-    poster_em:".EXE or WEB",
-    poster_li1:"🪟 Windows build (zip)",
-    poster_li2:"🌐 HTML5 build (browser)",
-    poster_li3:"🖼️ Name + cover image",
-    poster_li4:"📦 One clean archive",
-    poster_note:"1080×1920 portrait poster preview",
-    guide_export:"🖼️ Download as image",
-    guide_exporting:"Rendering image…",
-    guide_exported:"Guide image saved",
-    guide_export_fail:"Could not create image",
-    guide_export_cancel:"Save cancelled",
-    guide_poster_tag:"SUBMISSION GUIDE",
-    guide_edit:"Edit",
-    guide_edit_save:"Save",
-    guide_edit_cancel:"Cancel",
-    guide_edit_reset:"Reset to defaults",
-    guide_edit_hint:"Customized text is shown the same in both languages; leave a field empty to restore its default.",
-    guide_saved:"Guide saved",
-
-    nav_countdown:"Countdown",
-    cd_title:"Countdown",
-    cd_sub:"Fullscreen jam timer for the venue screen — set the start time, the rest is automatic.",
-    cd_sec_time:"Time",
-    cd_start_label:"Start time",
-    cd_duration:"Duration (hours)",
-    cd_sec_logos:"Logos",
-    cd_logo_left:"Left logo",
-    cd_logo_center:"Center logo (big)",
-    cd_logo_right:"Right logo",
-    cd_logo_center_hint:"Falls back to the jam logo when empty",
-    cd_style:"Timer style",
-    cd_arm:"Arm countdown",
-    cd_armed_hint:"The stage opens automatically from any screen 10 minutes before start.",
-    cd_open_stage:"Open Stage",
-    cd_phase_pre:"STARTS IN",
-    cd_phase_main:"TIME REMAINING",
-    cd_done:"TIME'S UP — SUBMIT NOW!",
-    cd_stage_empty:"No start time set — configure it in the Countdown tab.",
-    cd_past_warn:"Start time is in the past",
-    cd_pick:"Pick",
-    cd_clear:"Remove",
-    cd_status_idle:"No time set",
-    cd_status_done:"Time's up",
-    cd_obs_title:"Browser / OBS",
-    cd_obs_start:"Start Link",
-    cd_obs_hint:"Open the URL in a browser or add it to OBS as a Browser Source; the transparent variant is for stream overlays.",
-    cd_obs_open:"Open in Browser",
-    cd_obs_transparent:"Transparent background",
-    cd_obs_copied:"Link copied",
-
-    sec_update:"Updates",
-    upd_current:"Current version",
-    upd_auto:"Check automatically at startup",
-    upd_check:"Check for Updates",
-    upd_checking:"Checking…",
-    upd_uptodate:"You are up to date ✓",
-    upd_found:"New version available:",
-    upd_notes:"Release notes",
-    upd_install:"Download & Install",
-    upd_downloading:"Downloading…",
-    upd_ready:"Downloaded — ready to install",
-    upd_apply:"Install & Restart",
-    upd_restart_title:"Install Update",
-    upd_restart_body:"The app will close, install the update and relaunch. Continue?",
-    upd_dev_hint:"Auto-install is disabled in dev mode — copy files manually.",
-    upd_no_repo:"Enter the GitHub repository first.",
-    upd_err_network:"Could not reach the server (network error).",
-    upd_err_no_release:"No published release found in the repo.",
-    upd_err_rate:"GitHub rate limit hit, try again later.",
-    upd_err_bad_zip:"App not found inside the zip.",
-    upd_err_no_zip:"Download the update first.",
-    upd_zip_btn:"Update from Zip",
-    upd_toast_found:"Update available — install it from the Setup screen",
-
-    vote_title:"Voting",
-    vote_sub:"Jury, audience and team cast weighted votes from their phones over LAN.",
-    vote_groups:"Groups & Access",
-    vote_categories:"Categories",
-    vote_add_cat:"＋ Add category",
-    vote_weight_hint:"The coefficient is a category's relative importance (e.g. ×0.8 vs ×0.4 = twice as important). The final score stays out of 10.",
-    vote_server:"Server",
-    vote_port:"Port",
-    vote_start:"Start",
-    vote_stop:"Stop",
-    vote_running:"Running",
-    vote_stopped:"Off",
-    vote_links:"Vote links (open / share on phones)",
-    vote_board:"Code Board",
-    vote_coef_edit_hint:"Type a value: 1 = ×0.01, 10 = ×0.10, 100 = ×1.00 · decimals work too (0.8 = ×0.80) · confirm with Enter",
-    vote_board_hint:"Share this link with the group: everyone picks a free code; used codes flip to 'used' instantly.",
-    vote_scan_hint:"Devices on the same Wi-Fi can open these and vote.",
-    vote_no_results:"No votes yet.",
-    vote_votes:"votes",
-    vote_current_label:"Now presenting",
-    vote_waiting:"No game launched yet — open one from Present and it appears here automatically.",
-    vote_start_fail:"Could not start server",
-    vote_fw_prompt:"Firewall permission requested — click 'Yes' in the popup.",
-    vote_fw_denied:"Firewall permission denied; phones may not connect.",
-    vote_access_open:"Open",
-    vote_access_pin:"PIN",
-    vote_access_codes:"Codes",
-    vote_pin_ph:"Set a PIN",
-    vote_limit:"limit",
-    vote_code_count:"codes",
-    vote_show_codes:"Show Codes",
-    vote_hide_codes:"Hide",
-    vote_regen:"Regenerate",
-    vote_copy_all:"Copy All",
-    vote_copied:"Codes copied",
-    vote_code_copied:"Code copied",
-    vote_code_copy_hint:"Click to copy",
-    vote_link_copied:"Vote link copied to clipboard",
-    vote_link_msg:"voting page access link:",
-    vote_qr:"QR Code",
-    vote_qr_hint:"Scan with your phone camera — the voting page opens directly.",
-    vote_qr_fail:"Could not generate QR code",
-    vote_qr_screen:"QR Screen (project on stage)",
-    qr_stage_empty:"Start the voting server first.",
-    vote_codes_need_server:"Start the server to see codes.",
-    vote_seat_used:"seats used",
-    vote_regen_warn:"Old codes and device bindings will be invalidated. Generate new codes?",
-    vote_regen_q:"Regenerate codes?",
-    vote_participation:"Participation",
-    vote_total_votes:"votes",
-    vote_live_hint:"🔒 Scores are hidden — press \"Finalize\" when voting ends.",
-    vote_finalize:"🏁 Finalize Results",
-    vote_save_png:"🖼️ Save Image (PNG)",
-    vote_save_xlsx:"📊 Technical File (.xlsx)",
-    vote_results_title:"Results",
-    vote_no_votes:"No votes yet — nothing to finalize.",
-    vote_finalized:"Results revealed",
-    vote_xlsx_saved:"Technical file saved",
-    vote_xlsx_fail:"Could not save file",
-    vote_xlsx_cancel:"Save cancelled",
-    vote_png_saved:"Image saved",
-    vote_png_fail:"Could not save image",
-    vote_reset:"Reset Voting",
-    vote_reset_q:"Reset voting?",
-    vote_reset_confirm:"All votes will be permanently deleted. This cannot be undone.",
-    vote_reset_done:"Votes reset",
-    vote_reset_fail:"Could not reset votes",
-
-    res_title:"Results",
-    res_sub:"Stage-ready leaderboard visual — also saved as a PNG.",
-    res_top3:"Top 3",
-    res_top5:"Top 5",
-    res_all:"All",
-    res_empty_title:"No results yet",
-    res_empty_sub:"Press 🏁 Finalize on the Voting screen; results open here."
-  }
-};
-
+const LANGS = [
+  {code:"tr", name:"Türkçe"},
+  {code:"en", name:"English"},
+  {code:"fr", name:"Français"},
+  {code:"de", name:"Deutsch"},
+  {code:"es", name:"Español"},
+  {code:"pt", name:"Português"},
+  {code:"ja", name:"日本語"}
+];
 let LANG = "tr";
 function t(key){ return (STRINGS[LANG] && STRINGS[LANG][key]) || (STRINGS.en[key]) || key; }
 function setLanguage(lang){
-  LANG = (lang==="en")?"en":"tr";
+  LANG = STRINGS[lang] ? lang : "tr";
   document.documentElement.setAttribute("lang", LANG);
   if(window.__rerenderText) window.__rerenderText();
+}
+function langOptions(){
+  return LANGS.map(function(l){ return '<option value="'+l.code+'" '+(LANG===l.code?"selected":"")+'>'+l.name+'</option>'; }).join("");
+}
+/* Varsayılan oy kategori/grup etiketleri: kullanıcı değiştirmediyse (yani değer
+   herhangi bir dildeki varsayılana eşitse) o anki dile çevrilir; özel adlar korunur. */
+const VOTE_DEF_SETS=(function(){ const d=window.JAMDECK_I18N||{}, cat={}, grp={};
+  for(const l in d){ const vd=(d[l]||{}).vote_defaults||{};
+    for(const id in (vd.cat||{})){ (cat[id]=cat[id]||[]).push(vd.cat[id]); }
+    for(const id in (vd.grp||{})){ (grp[id]=grp[id]||[]).push(vd.grp[id]); } }
+  return {cat,grp}; })();
+function localizeVoteDefaults(){
+  const v=(typeof CONFIG!=="undefined")&&CONFIG&&CONFIG.voting; if(!v) return;
+  const cur=((window.JAMDECK_I18N||{})[LANG]||{}).vote_defaults||{cat:{},grp:{}};
+  (v.categories||[]).forEach(c=>{ const s=VOTE_DEF_SETS.cat[c.id];
+    if(s&&s.indexOf(c.label)>=0&&cur.cat&&cur.cat[c.id]) c.label=cur.cat[c.id]; });
+  const g=v.groups||{}; for(const k in g){ const s=VOTE_DEF_SETS.grp[k];
+    if(s&&g[k]&&s.indexOf(g[k].label)>=0&&cur.grp&&cur.grp[k]) g[k].label=cur.grp[k]; }
 }
 /* ===== src/effects.js ===== */
 /* ============================================================
@@ -2079,6 +1628,12 @@ function makeBridge(){
       return wait(200).then(()=>({ok:true, ...this.__voting}));
     },
     stopVoting(){ this.__voting={running:false}; return Promise.resolve({ok:true}); },
+    startInternetVoting(){ setTimeout(()=>{ this._emit("tunnel:progress",{pct:-1,stage:"connect"});
+      setTimeout(()=>this._emit("tunnel:ready",{url:"https://demo-jam.tailnet-xyz.ts.net"}),400); },50);
+      return Promise.resolve({ok:true}); },
+    stopInternetVoting(){ return Promise.resolve({ok:true}); },
+    getInternetVotingState(){ return Promise.resolve({installed:true,loggedIn:true,url:"https://demo-jam.tailnet-xyz.ts.net"}); },
+    openUrl(u){ try{ window.open(u,"_blank"); }catch(e){} return Promise.resolve({ok:true}); },
     getVotingStatus(){ return Promise.resolve(this.__voting||{running:false}); },
     setVotingConfig(v){ return Promise.resolve({ok:true}); },
     getResults(){
@@ -2254,8 +1809,8 @@ function makeBridge(){
   }
 
   function modeLabel(mode){
-    if(LANG==="en") return mode==="light"?"light":"dark";
-    return mode==="light"?"açık":"koyu";
+    if(LANG==="tr") return mode==="light"?"açık":"koyu";
+    return mode==="light"?"light":"dark";
   }
 
   function themeCard(key){
@@ -2301,10 +1856,7 @@ function makeBridge(){
           <p data-t="setup_sub">${t("setup_sub")}</p>
         </div>
         <div class="head-actions">
-          <div class="seg seg-sm" id="suLang">
-            <button data-lang="tr" class="${LANG==="tr"?"active":""}">TR</button>
-            <button data-lang="en" class="${LANG==="en"?"active":""}">EN</button>
-          </div>
+          <select class="select select-lang" id="suLang" aria-label="${t("language")}">${langOptions()}</select>
         </div>
       </div>
 
@@ -2532,18 +2084,19 @@ function makeBridge(){
     $("#suGlow",root).oninput=e=>{ CONFIG.theme.glow=+e.target.value;
       $("#suGlowVal").textContent=Math.round(e.target.value*30)+"%"; liveTheme(); };
 
-    // efekt
+    // efekt — değişiklik DİSKE de yazılır (dil gibi oto-kaydet) ki tarayıcı/OBS
+    // sayaç sayfası (config'i diskten okur) seçilen efekti anında göstersin.
     $("#suFxOn",root).onchange=e=>{ CONFIG.effect.enabled=e.target.checked;
-      if(effectCtl)effectCtl.setEnabled(e.target.checked); };
+      if(effectCtl)effectCtl.setEnabled(e.target.checked); Bridge.saveConfig(CONFIG); };
     $$("[data-fx]",root).forEach(b=>b.onclick=()=>{ const k=b.dataset.fx; CONFIG.effect.name=k;
       $$("[data-fx]",root).forEach(x=>x.classList.toggle("selected",x===b));
-      if(effectCtl)effectCtl.setEffect(k,CONFIG.effect.intensity,1); });
+      if(effectCtl)effectCtl.setEffect(k,CONFIG.effect.intensity,1); Bridge.saveConfig(CONFIG); });
     $("#suFxInt",root).oninput=e=>{ CONFIG.effect.intensity=+e.target.value;
       if(effectCtl)effectCtl.setIntensity(+e.target.value); };
+    $("#suFxInt",root).onchange=()=>Bridge.saveConfig(CONFIG);   // sürükleme bitince kaydet (oninput'u spam'lama)
 
     // dil
-    $$("#suLang button",root).forEach(b=>b.onclick=()=>{ setLanguage(b.dataset.lang); CONFIG.jam.language=LANG;
-      $$("#suLang button",root).forEach(x=>x.classList.toggle("active",x===b)); });
+    $("#suLang",root).onchange=e=>{ setLanguage(e.target.value); CONFIG.jam.language=LANG; Bridge.saveConfig(CONFIG); };
 
     // davranış
     $("#suMin",root).oninput=e=>CONFIG.launcher.defaultMinutes=+e.target.value;
@@ -2684,7 +2237,16 @@ function makeBridge(){
     $$(".fx-card").forEach(card=>{ const k=card.dataset.fx; const lbl=card.querySelector(".fx-label");
       if(lbl&&EFFECT_LABELS[k]) lbl.textContent=EFFECT_LABELS[k][LANG]||EFFECT_LABELS[k].en; });
     $$("[data-mode-label]").forEach(sp=>{ const k=sp.dataset.modeLabel;
-      if(THEME_PRESETS[k]) sp.textContent=(LANG==="en")?THEME_PRESETS[k].mode:(THEME_PRESETS[k].mode==="light"?"açık":"koyu"); });
+      if(THEME_PRESETS[k]) sp.textContent=(LANG==="tr")?(THEME_PRESETS[k].mode==="light"?"açık":"koyu"):THEME_PRESETS[k].mode; });
+    // JS ile üretilen <option>'lar data-t taşımaz → dil değişince elle tazele (seçim korunur)
+    const nf=$("#suNameFont"); if(nf) nf.innerHTML=fontOptions(CONFIG.jam.nameFont);
+    const tf=$("#suTagFont");  if(tf) tf.innerHTML=fontOptions(CONFIG.jam.taglineFont);
+    const tu=$("#suTimeup"); if(tu){ const v=CONFIG.launcher.onTimeUp;
+      tu.innerHTML=`<option value="kill" ${v==="kill"?"selected":""}>${t("timeup_kill")}</option>`+
+                   `<option value="warn" ${v==="warn"?"selected":""}>${t("timeup_warn")}</option>`+
+                   `<option value="return" ${v==="return"?"selected":""}>${t("timeup_return")}</option>`; }
+    // güncelleme sürüm çipi (etiket + dinamik sürüm) JS ile kurulur → dil değişince tazele
+    const uv=$("#suUpdVer"); if(uv&&window.APP_INFO&&window.APP_INFO.version) uv.textContent=`${t("upd_current")}: v${window.APP_INFO.version}`;
   };
 })();
 /* ===== src/app.js ===== */
@@ -2863,8 +2425,7 @@ function renderQrStage(){
     return;
   }
   if(!QR_GROUP||!keys.includes(QR_GROUP)) QR_GROUP=keys[0];
-  const gt=st.group_tokens, port=st.port;
-  const url=(gt&&gt[QR_GROUP]&&port&&_voteIp)?`http://${_voteIp}:${port}/v/${gt[QR_GROUP]}`:((st.urls&&st.urls[QR_GROUP])||"");
+  const url=voteLinkFor(st,QR_GROUP);
   const lab=(groups[QR_GROUP]&&groups[QR_GROUP].label)||QR_GROUP;
   const logo=CONFIG.jam.logo;
   host.innerHTML=`
@@ -3028,13 +2589,15 @@ function cdFitDigits(){
   const dg=$("#cdDigits"); if(!dg) return;
   const stage=dg.closest(".cd-stage"); if(!stage) return;
   const gh=$("#cdGhost");
-  dg.style.fontSize=""; if(gh) gh.style.fontSize="";
-  const avail=stage.clientWidth*0.92;
-  const w=dg.scrollWidth;
-  if(w>avail){
-    const px=Math.max(24, Math.floor(parseFloat(getComputedStyle(dg).fontSize)*avail/w));
-    dg.style.fontSize=px+"px"; if(gh) gh.style.fontSize=px+"px";
-  }
+  // sabit 100px tabanda ölç → genişliği DOLDURACAK boyutu oransal kur (büyüt VEYA küçült);
+  // em-tabanlı hane genişlikleri → doğrusal ölçek; yükseklik tavanıyla sınırla.
+  dg.style.fontSize="100px"; if(gh) gh.style.fontSize="100px";
+  const w=dg.scrollWidth||1;
+  const availW=stage.clientWidth*0.94;
+  let px=100*availW/w;
+  px=Math.min(px, stage.clientHeight*0.46);   // logolar+faz+bar için dikey pay
+  px=Math.max(24, px);
+  dg.style.fontSize=px+"px"; if(gh) gh.style.fontSize=px+"px";
 }
 window.addEventListener("resize",()=>{ if(currentScreen==="countdownstage") cdFitDigits(); });
 /* HP Bar: main fazında kalan oran; pre'de dolu, done'da boş; ≤%25'te kırmızı+yanıp sönme */
@@ -3211,6 +2774,10 @@ function makePyBridge(){
     applyUpdate:    ()      => api.applyUpdate(),
     startVoting:       ()        => api.startVoting(),
     stopVoting:        ()        => api.stopVoting(),
+    startInternetVoting:()       => api.startInternetVoting(),
+    getInternetVotingState:()    => api.getInternetVotingState(),
+    openUrl:           (u)       => api.openUrl(u),
+    stopInternetVoting: ()       => api.stopInternetVoting(),
     getVotingStatus:   ()        => api.getVotingStatus(),
     setVotingConfig:   (v)       => api.setVotingConfig(v),
     getResults:        ()        => api.getResults(),
@@ -3316,10 +2883,7 @@ function renderSidebar(){
     </nav>
     <div class="sidebar-foot">
       <div class="row">
-        <div class="seg seg-sm" id="sideLang">
-          <button data-lang="tr" class="${LANG==="tr"?"active":""}">TR</button>
-          <button data-lang="en" class="${LANG==="en"?"active":""}">EN</button>
-        </div>
+        <select class="select select-lang side-lang" id="sideLang" aria-label="${t("language")}">${langOptions()}</select>
         <button class="btn btn-ghost btn-sm" data-nav="setup" title="${t("settings")}">${icon("settings")}</button>
       </div>
       <div class="version" id="sideVersion">JAMDECK</div>
@@ -3828,6 +3392,22 @@ function svgToPng(svgString,w,h){
     img.src=url;
   });
 }
+// Bir DOM elemanını OLDUĞU GİBİ (sayfanın kendi CSS'iyle) PNG'ye çevirir — foreignObject
+// içine elemanı + tüm <style>'ları gömer. color-mix/gradient gerçek tarayıcıyla render olur;
+// kapaklar dataURL olduğu için canvas tainting YOK. Kaydetme = ekrandaki görünümün aynısı.
+async function domToPng(el, scale){
+  scale = scale || 2;
+  const w = el.clientWidth, h = el.scrollHeight;
+  let css = ""; document.querySelectorAll("style").forEach(s => css += s.textContent + "\n");
+  const xml = new XMLSerializer().serializeToString(el);
+  const bg = cssVar("--bg") || "#050a14";
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">'
+    + '<foreignObject x="0" y="0" width="100%" height="100%">'
+    + '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + w + 'px;height:' + h + 'px;background:' + bg + '">'
+    + '<style><![CDATA[' + css + ']]></style>' + xml + '</div>'
+    + '</foreignObject></svg>';
+  return svgToPng(svg, w * scale, h * scale);
+}
 async function exportGuide(){
   const btn=$("#guideExport"); setBtnLoading(btn,true,t("guide_exporting"));
   try{
@@ -3870,6 +3450,7 @@ function screenVoting(){
 
         <div class="card">
           <div class="card-head">${icon("sliders")}<span class="card-title" data-t="vote_groups">${t("vote_groups")}</span></div>
+          <div id="voteLockNote" class="vg-lock-note" style="display:none">🔒 <span data-t="vote_lock_hint">${t("vote_lock_hint")}</span></div>
           <div id="voteGroups"></div>
         </div>
       </div>
@@ -3877,14 +3458,16 @@ function screenVoting(){
       <div class="col">
         <div class="card">
           <div class="card-head">
-            ${icon("globe")}<span class="card-title" data-t="vote_server">${t("vote_server")}</span>
+            ${icon("globe")}<span class="card-title" data-t="vote_online">${t("vote_online")}</span>
             <span class="spacer"></span>
           </div>
+          <div id="voteModeHint" class="muted" style="font-size:11px;margin:0 0 9px;line-height:1.4" data-t="vote_internet_cap">${t("vote_internet_cap")}</div>
           <div class="server-row">
             <input class="input mono" id="votePort" type="number" min="1024" max="65535" title="${t("vote_port")}">
             <button class="btn btn-sm" id="voteToggle"></button>
             <select class="select" id="voteIpSel" style="width:auto;flex:1;display:none" title="IP"></select>
           </div>
+          <div id="voteInetStatus" class="muted" style="display:none;font-size:11.5px;margin-top:9px;line-height:1.4"></div>
           <div id="voteLinks" style="margin-top:11px"></div>
         </div>
 
@@ -3908,22 +3491,26 @@ function screenVoting(){
 }
 
 function accessExtra(k,g,access){
+  // kapasite/erişim alanları sunucu açıkken kilitli (set-before-start): çalışırken
+  // limit/PIN/kod değişimi koltukları/kodları sahipsiz bırakırdı → kafa karışıklığı
+  const lk=_votingRunning?` disabled title="${escAttr(t("vote_lock_hint"))}"`:"";
   if(access==="pin"){
-    return `<input class="input mono vg-pin" data-grp-pin="${k}" placeholder="${t("vote_pin_ph")}" value="${escAttr(g.pin)}">
-      <input type="number" min="0" max="9999" class="input" data-grp-limit="${k}" value="${g.limit||0}" title="${t("vote_limit")}"><span class="muted" style="font-size:11px">${t("vote_limit")}</span>`;
+    return `<input class="input mono vg-pin" data-grp-pin="${k}" placeholder="${t("vote_pin_ph")}" value="${escAttr(g.pin)}"${lk}>
+      <input type="number" min="0" max="9999" class="input" data-grp-limit="${k}" value="${g.limit||0}" title="${t("vote_limit")}"${lk}><span class="muted" style="font-size:11px">${t("vote_limit")}</span>`;
   }
   if(access==="codes"){
-    return `<input type="number" min="0" max="500" class="input" data-grp-count="${k}" value="${g.codeCount||0}" title="${t("vote_code_count")}"><span class="muted" style="font-size:11px">${t("vote_code_count")}</span>
+    return `<input type="number" min="0" max="500" class="input" data-grp-count="${k}" value="${g.codeCount||0}" title="${t("vote_code_count")}"${lk}><span class="muted" style="font-size:11px">${t("vote_code_count")}</span>
       <button class="btn btn-secondary btn-sm" data-grp-codesbtn="${k}">${t("vote_show_codes")}</button>`;
   }
-  return `<input type="number" min="0" max="9999" class="input" data-grp-limit="${k}" value="${g.limit||0}" title="${t("vote_limit")}"><span class="muted" style="font-size:11px">${t("vote_limit")}</span>`;
+  return `<input type="number" min="0" max="9999" class="input" data-grp-limit="${k}" value="${g.limit||0}" title="${t("vote_limit")}"${lk}><span class="muted" style="font-size:11px">${t("vote_limit")}</span>`;
 }
 function renderVoteGroups(){
   const host=$("#voteGroups"); if(!host) return;
   const groups=CONFIG.voting.groups;
+  const seglk=_votingRunning?` disabled title="${escAttr(t("vote_lock_hint"))}"`:"";
   host.innerHTML=Object.keys(groups).map(k=>{
     const g=groups[k], access=g.access||"open";
-    return `<div class="group-row ${g.enabled?'':'off'}" data-grp="${k}">
+    return `<div class="group-row ${g.enabled?'':'off'}${_votingRunning?' locked':''}" data-grp="${k}">
       <div class="g-head">
         <input type="checkbox" class="sw" ${g.enabled?'checked':''} data-grp-en="${k}">
         <span class="g-name"><span class="dot" style="background:${groupDot(k)}"></span>${g.label}</span>
@@ -3932,15 +3519,16 @@ function renderVoteGroups(){
         <input type="range" min="0" max="200" value="${g.weight}" data-grp-w="${k}">
         <span class="coef" data-grp-wv="${k}">×<input class="coef-in" type="text" inputmode="decimal" data-grp-win="${k}" value="${(g.weight/100).toFixed(2)}" title="${t("vote_coef_edit_hint")}"></span>
         <div class="seg seg-sm" data-grp-access="${k}">
-          <button data-val="open" class="${access==="open"?"active":""}">${t("vote_access_open")}</button>
-          <button data-val="pin" class="${access==="pin"?"active":""}">${t("vote_access_pin")}</button>
-          <button data-val="codes" class="${access==="codes"?"active":""}">${t("vote_access_codes")}</button>
+          <button data-val="open" class="${access==="open"?"active":""}"${seglk}>${t("vote_access_open")}</button>
+          <button data-val="pin" class="${access==="pin"?"active":""}"${seglk}>${t("vote_access_pin")}</button>
+          <button data-val="codes" class="${access==="codes"?"active":""}"${seglk}>${t("vote_access_codes")}</button>
         </div>
         <div class="g-extra">${accessExtra(k,g,access)}</div>
       </div>
       <div class="vg-codes-panel" data-grp-panel="${k}"></div>
     </div>`;
   }).join("");
+  const lockNote=$("#voteLockNote"); if(lockNote) lockNote.style.display=_votingRunning?"":"none";
 }
 
 let _codesOpen={};
@@ -3973,9 +3561,7 @@ async function renderCodesPanel(k){
 }
 /* kod panosu URL'si: oy linkindeki /v/ → /k/ (aynı token, sunucu açıkken) */
 function boardLinkFor(k){
-  const st=_voteState; if(!st) return "";
-  const gt=st.group_tokens, port=st.port;
-  const v=(gt&&gt[k]&&port&&_voteIp)?`http://${_voteIp}:${port}/v/${gt[k]}`:((st.urls&&st.urls[k])||"");
+  const v=voteLinkFor(_voteState,k);
   return v?v.replace("/v/","/k/"):"";
 }
 async function toggleCodesPanel(k){
@@ -4030,11 +3616,29 @@ function updateVoteToggle(running){
     : `<span class="chip"><span class="dot"></span>${t("vote_stopped")}</span>`; }
 }
 
-let _voteState=null, _voteIp=null;
+let _voteState=null, _voteIp=null, _publicUrl=null, _votingRunning=false, _inetPending=false;
+// link tabanı: internet (Cloudflare tüneli) açıksa public URL, değilse LAN ip:port
+function voteBaseFor(st){
+  if(_publicUrl) return _publicUrl;
+  const port=st&&st.port;
+  return (port&&_voteIp)?`http://${_voteIp}:${port}`:null;
+}
+function voteLinkFor(st,k){
+  const gt=st&&st.group_tokens, tok=gt&&gt[k], base=voteBaseFor(st);
+  if(base&&tok) return `${base}/v/${tok}`;
+  return (st&&st.urls&&st.urls[k])||"";
+}
 function renderVoteLinks(st){
   const host=$("#voteLinks"), ipSel=$("#voteIpSel"); if(!host) return;
-  if(!st||!(st.urls||st.group_tokens)){ host.innerHTML=""; if(ipSel)ipSel.style.display="none"; _voteState=null; return; }
+  if(!st||!(st.urls||st.group_tokens)){ host.innerHTML=""; if(ipSel)ipSel.style.display="none"; const si=$("#voteInetStatus"); if(si)si.style.display="none"; _voteState=null; return; }
   _voteState=st;
+  // İnternet modu: public link hazır olana dek LAN linklerini GÖSTERME → loading
+  // (kullanıcı kararı: internette LAN linki hiç görünmesin, flicker olmasın)
+  if(_inetPending && !_publicUrl){
+    if(ipSel) ipSel.style.display="none";
+    host.innerHTML=`<div class="links-loading">${t("vote_internet_starting")}</div>`;
+    return;
+  }
   const groups=CONFIG.voting.groups;
   const ips=(st.ips&&st.ips.length)?st.ips:(st.ip?[st.ip]:[]);
   if(!_voteIp||!ips.includes(_voteIp)) _voteIp=ips[0]||st.ip;
@@ -4045,8 +3649,9 @@ function renderVoteLinks(st){
       ipSel.onchange=()=>{ _voteIp=ipSel.value; renderVoteLinks(_voteState); };
     } else ipSel.style.display="none";
   }
-  const gt=st.group_tokens, port=st.port;
-  const linkFor=k=>(gt&&gt[k]&&port&&_voteIp)?`http://${_voteIp}:${port}/v/${gt[k]}`:((st.urls&&st.urls[k])||"");
+  if(_publicUrl && ipSel) ipSel.style.display="none";   // internet modunda IP seçimi gereksiz
+  const gt=st.group_tokens;
+  const linkFor=k=>voteLinkFor(st,k);
   const keys=Object.keys(gt||st.urls||{}).filter(k=>!groups[k]||groups[k].enabled);
   const rows=keys.map(k=>{
     const lab=(groups[k]&&groups[k].label)||k;
@@ -4058,7 +3663,7 @@ function renderVoteLinks(st){
       <button class="btn btn-secondary btn-sm" data-qr="${escAttr(url)}" data-lab="${escAttr(lab)}" title="${t("vote_qr")}">${icon("qr")}</button>
     </div>`;
   }).join("");
-  host.innerHTML=`${rows}<div class="vl-hint">${t("vote_scan_hint")}</div>
+  host.innerHTML=`${rows}<div class="vl-hint">${t(_publicUrl?"vote_scan_hint_net":"vote_scan_hint")}</div>
     <div style="margin-top:10px"><button class="btn btn-secondary" id="qrStageBtn" style="width:100%">${icon("qr")} <span>${t("vote_qr_screen")}</span></button></div>`;
   const qsb=$("#qrStageBtn"); if(qsb) qsb.onclick=()=>navigate("qr");
   $$("#voteLinks [data-copy]").forEach(n=>n.onclick=()=>{
@@ -4074,14 +3679,17 @@ function renderVoteLinks(st){
 function renderVoteResults(r){
   const host=$("#voteResults"); if(!host) return;
   const games=(r&&r.games)||[];
-  let total=0; const perGroup={};
+  let total=0; const summed={};
   games.forEach(g=>{ Object.keys(g.groups||{}).forEach(k=>{
-    const c=(g.groups[k]&&g.groups[k].count)||0; perGroup[k]=(perGroup[k]||0)+c; total+=c;
+    const c=(g.groups[k]&&g.groups[k].count)||0; summed[k]=(summed[k]||0)+c; total+=c;
   }); });
   if(!total){ host.innerHTML=`<div class="vote-empty">${t("vote_no_results")}</div>`; return; }
-  const chips=Object.keys(CONFIG.voting.groups||{}).filter(k=>(perGroup[k]||0)>0).map(k=>{
+  // Grup rozetleri TEKİL KİŞİ sayısını gösterir (backend "participants"): tek telefon
+  // 3 ayrı oyuna oy verse bile Seyirci=1. participants yoksa (eski/mock) oy toplamına düş.
+  const people=(r&&r.participants)?r.participants:summed;
+  const chips=Object.keys(CONFIG.voting.groups||{}).filter(k=>(people[k]||0)>0).map(k=>{
     const lab=(CONFIG.voting.groups[k]&&CONFIG.voting.groups[k].label)||k;
-    return `<span class="chip"><span class="dot" style="background:${groupDot(k)}"></span>${lab} <b>${perGroup[k]||0}</b></span>`;
+    return `<span class="chip"><span class="dot" style="background:${groupDot(k)}"></span>${lab} <b>${people[k]||0}</b></span>`;
   }).join("");
   host.innerHTML=`<div class="participation">
       <div class="big-num mono">${total}<small> ${t("vote_total_votes")}</small></div>
@@ -4229,15 +3837,37 @@ async function resetVotes(){
   }});
 }
 
+function setInetStatus(txt){ const s=$("#voteInetStatus"); if(s){ s.removeAttribute("data-t"); s.textContent=txt; s.style.display=txt?"":"none"; } }
+function resetInternet(){
+  _publicUrl=null; _inetPending=false;
+  const s=$("#voteInetStatus"); if(s){ s.removeAttribute("data-t"); s.textContent=""; s.style.display="none"; }
+}
+// İnternet modunda Başlat'ta funnel'ı açar (ayrı aç/kapa anahtarı YOK — üstteki
+// mod seçimi belirler). Durdurmada stopVoting funnel'ı da kapatır.
+async function startInternetTunnel(){
+  setInetStatus(t("vote_internet_starting"));
+  let res; try{ res=await Bridge.startInternetVoting(); }catch(e){ res=null; }
+  if(!res||!res.ok){ resetInternet(); renderVoteLinks(_voteState); toast((res&&res.error)||t("vote_internet_fail"),"error"); return; }
+  if(res.already&&res.url){ _publicUrl=res.url; _inetPending=false; setInetStatus(t("vote_internet_on")); renderVoteLinks(_voteState); }
+  else if(res.downloading) setInetStatus(t("vote_internet_dl"));
+  // gerisini tunnel:ready / tunnel:error olayları halleder
+}
+// ===== OYLAMA = ONLINE (tek yol; eski İnternet/LAN seçimi kaldırıldı) =====
+// Oylama her zaman internet üzerinden (Tailscale Funnel) servis edilir; sabit
+// bağlantı, ~500 kişiye kadar stabil. LAN modu + kapasite testi tamamen kaldırıldı.
 function applyVotingStatus(st){
   const running=!!(st&&st.running);
+  _votingRunning=running;
+  renderVoteGroups();   // kapasite/erişim alanlarını çalışırken kilitle / dururken aç
   updateVoteToggle(running);
+  if(!running) resetInternet();
   renderVoteLinks(running?st:null);
   if(currentScreen==="qr") renderQrStage(); // sunucu durumu değişirse sahne tazelensin
-  const fb=$("#voteFinalize"); if(fb){ fb.style.display=running?"":"none"; }
+  // Finalize her zaman görünür: sunucu kapalıyken bile eski oylar (votes.json) açılabilsin.
+  const fb=$("#voteFinalize"); if(fb){ fb.style.display=""; }
   if(running) startVotePolling();
-  else { stopVotePolling(); const h=$("#voteResults"); if(h) h.innerHTML=`<div class="vote-empty">${t("vote_no_results")}</div>`;
-         const c=$("#voteCurrent"); if(c){ c.innerHTML=""; c.className="vote-current"; } }
+  // Sunucu kapalı: polling yok ama eski oyları BİR KEZ göster (yoksa boş mesaj düşer).
+  else { stopVotePolling(); fetchVoteResults(); }
 }
 
 async function toggleVoting(){
@@ -4250,9 +3880,12 @@ async function toggleVoting(){
     await Bridge.saveConfig(CONFIG);
     const res=await Bridge.startVoting(); b.disabled=false;
     if(res&&res.ok){
+      _inetPending=true;   // public link hazır olana dek loading göster
       applyVotingStatus({...res,running:true}); toast(t("vote_running"),"success");
       if(res.firewall==="prompted") toast(t("vote_fw_prompt"),"info");
       else if(res.firewall==="denied"||res.firewall==="error") toast(t("vote_fw_denied"),"error");
+      // Online oylama: Tailscale funnel'ı Başlat'ta her zaman aç (public link).
+      startInternetTunnel();
     }
     else toast((res&&res.error)||t("vote_start_fail"),"error");
   }
@@ -4353,6 +3986,29 @@ function wireVoting(){
   const rf=$("#voteRefresh"); if(rf) rf.onclick=fetchVoteResults;
   const fin=$("#voteFinalize"); if(fin) fin.onclick=finalizeResults;
   const rst=$("#voteReset"); if(rst) rst.onclick=resetVotes;
+  if(!window.__tunnelWired){ window.__tunnelWired=true;
+    Bridge.on("tunnel:progress",p=>{ if(!$("#voteInetStatus"))return; const stg=p&&p.stage;
+      let m=t("vote_internet_starting");
+      if(stg==="install") m=t("vote_internet_install")+(p.pct>=0?" "+p.pct+"%":"");
+      else if(stg==="login") m=t("vote_internet_login_wait");
+      setInetStatus(m); });
+    Bridge.on("tunnel:ready",p=>{ _publicUrl=(p&&p.url)||null; _inetPending=false;
+      setInetStatus(t("vote_internet_on")); renderVoteLinks(_voteState); if(currentScreen==="qr") renderQrStage(); toast(t("vote_internet_on"),"success"); });
+    Bridge.on("tunnel:error",e=>{ resetInternet(); renderVoteLinks(_voteState);
+      const code=e&&e.error;
+      if(code==="funnel_not_enabled"){   // tek seferlik: kullanıcıyı etkinleştirme sayfasına yönlendir
+        const url=(e&&e.enableUrl)||"https://tailscale.com/kb/1223/funnel";
+        setInetStatus(t("vote_inet_funnel"));
+        modal({ title:t("vote_inet_funnel_title"),
+                body:t("vote_inet_funnel")+'<br><br><span style="font-size:11.5px;opacity:.7;word-break:break-all">'+url+'</span>',
+                confirmLabel:t("vote_inet_enable_btn"), cancelLabel:t("cancel"),
+                onConfirm:()=>Bridge.openUrl(url) });
+        return;
+      }
+      const map={tailscale_not_installed:"vote_inet_no_ts",tailscale_not_logged_in:"vote_inet_login",tailscale_install_declined:"vote_inet_declined"};
+      const msg=(code&&map[code])?t(map[code]):t("vote_internet_fail");
+      setInetStatus(msg); toast(msg+((e&&e.detail&&!map[code])?(" — "+String(e.detail).slice(0,160)):""),"error"); });
+  }
   refreshVotingStatus();
 }
 async function refreshVotingStatus(){ applyVotingStatus(await Bridge.getVotingStatus()); }
@@ -4363,6 +4019,10 @@ function renderVoting(){ wireVoting(); }
    ============================================================ */
 let LAST_RESULTS=null;
 let RES_VARIANT="top3";
+// Sonuç sekmesi spoiler kapısı + ödül töreni durumu
+const CEREMONY={depth:5, list:[], order:[], pos:0, fx:null, lock:false};
+let cerForceAll=false;   // törenden "Tüm Sıralamayı Göster" ile gelindiğinde kapıyı atla
+let cerBurst=null;       // kenar konfeti patlaması durumu (ayrı overlay canvas)
 
 function screenResults(){
   return `<section class="screen" id="screen-results" data-screen-label="Results">
@@ -4377,11 +4037,34 @@ function screenResults(){
           <button data-variant="top5" data-t="res_top5">${t("res_top5")}</button>
           <button data-variant="all" data-t="res_all">${t("res_all")}</button>
         </div>
+        <button class="btn btn-secondary" id="resFull">${icon("expand")}<span data-t="res_fullscreen">${t("res_fullscreen")}</span></button>
         <button class="btn btn-secondary" id="resSavePng"><span class="btn-spinner"></span><span class="btn-txt" data-t="vote_save_png">${t("vote_save_png")}</span></button>
         <button class="btn btn-secondary" id="resSaveXlsx"><span class="btn-spinner"></span><span class="btn-txt" data-t="vote_save_xlsx">${t("vote_save_xlsx")}</span></button>
       </div>
     </div>
     <div class="card stage-card" id="resStage"></div>
+  </section>`;
+}
+function screenResultStage(){
+  return `<section class="screen" id="screen-resultstage" data-screen-label="Results Stage">
+    <button class="kiosk-exit" id="resStageExit" title="${t("exit_full")}">✕</button>
+    <div class="res-stage-full" id="resStageFull"></div>
+  </section>`;
+}
+function screenCeremony(){
+  return `<section class="screen" id="screen-ceremony" data-screen-label="Ceremony">
+    <canvas id="cerFx"></canvas>
+    <canvas id="cerBurst"></canvas>
+    <div class="cer-flash" id="cerFlash"></div>
+    <button class="kiosk-exit" id="cerExit" title="${t("cer_exit")}">✕</button>
+    <div class="cer-wrap">
+      <div class="cer-stage" id="cerStage"></div>
+      <div class="cer-controls">
+        <button class="btn btn-ghost" id="cerPrev">${t("cer_prev")}</button>
+        <span class="cer-count" id="cerCount"></span>
+        <button class="btn btn-primary" id="cerShowAll" hidden></button>
+      </div>
+    </div>
   </section>`;
 }
 
@@ -4399,8 +4082,8 @@ function gbarsHTML(g, scale, gkeys, glabel){
   }).join("")}</div>`;
 }
 
-function renderResults(){
-  const host=$("#resStage"); if(!host) return;
+function renderResults(hostSel){
+  const host=$(hostSel||"#resStage"); if(!host) return;
   const logo=CONFIG.jam.logo;
   // sahne başlığında SADECE büyük logo (isim/etiket yok — Sunum ile aynı dil)
   const logoPart=logo?`<img src="${logo}" alt="">`:`<div class="logo-ph">GAME JAM<br>LOGO</div>`;
@@ -4427,34 +4110,34 @@ function renderResults(){
   const glabel={}; gkeys.forEach(k=>glabel[k]=groupsCfg[k].label||k);
   const legend=`<div class="legend">${gkeys.map(k=>`<span><i style="background:${groupDot(k)}"></i>${glabel[k]}</span>`).join("")}</div>`;
 
-  let bodyHTML="";
-  if(RES_VARIANT==="top3"){
-    const order=["second","first","third"]; // DOM sırası değil görsel sıra CSS order ile
-    const top=games.slice(0,3);
-    bodyHTML=`<div class="podium-wrap"><div class="podium">${top.map((g,i)=>{
-      const meta=gameMeta(g.id);
-      const cover=(meta.cover)?`style="background-image:url('${meta.cover}')"`:"";
-      const cls=i===0?"first":(i===1?"second":"third");
-      return `<div class="pod ${cls}">
-        <span class="medal">${MEDALS[i]||""}</span>
-        <div class="p-cover" ${cover}></div>
-        <span class="p-team">${meta.team||""}</span>
-        <span class="p-name">${g.name||g.id}</span>
-        <span class="score-badge">${g.weighted!=null?g.weighted:0}<small>/${scale}</small></span>
-        ${gbarsHTML(g,scale,gkeys,glabel)}
-      </div>`;
-    }).join("")}</div></div>`;
-  } else {
-    const list=RES_VARIANT==="top5"?games.slice(0,5):games;
-    bodyHTML=`<div class="rank-list">${list.map((g,i)=>{
-      const meta=gameMeta(g.id);
-      return `<div class="rank-row" data-rank="${i+1}">
-        <span class="rk">${i+1}</span>
-        <div class="r-meta"><div class="r-name">${i===0?"🏆 ":""}${g.name||g.id}</div><div class="r-team">${meta.team||""}</div></div>
-        ${gbarsHTML(g,scale,gkeys,glabel)}
-        <span class="score-badge">${g.weighted!=null?g.weighted:0}</span>
-      </div>`;
-    }).join("")}</div>`;
+  // İlk 3 HER ZAMAN podium (büyük); top5/all'da kalanlar AYNI ekranda liste olarak altta
+  const top=games.slice(0,3);
+  let bodyHTML=`<div class="podium-wrap"><div class="podium">${top.map((g,i)=>{
+    const meta=gameMeta(g.id);
+    const cover=(meta.cover)?`style="background-image:url('${meta.cover}')"`:"";
+    const cls=i===0?"first":(i===1?"second":"third");
+    return `<div class="pod ${cls}">
+      <span class="medal">${MEDALS[i]||""}</span>
+      <div class="p-cover" ${cover}></div>
+      <span class="p-team">${meta.team||""}</span>
+      <span class="p-name">${g.name||g.id}</span>
+      <span class="score-badge">${g.weighted!=null?g.weighted:0}<small>/${scale}</small></span>
+      ${gbarsHTML(g,scale,gkeys,glabel)}
+    </div>`;
+  }).join("")}</div></div>`;
+  if(RES_VARIANT!=="top3"){
+    const rest=(RES_VARIANT==="top5"?games.slice(3,5):games.slice(3));
+    if(rest.length){
+      bodyHTML+=`<div class="rank-list" style="margin-top:18px">${rest.map((g,j)=>{
+        const i=j+3, meta=gameMeta(g.id);
+        return `<div class="rank-row" data-rank="${i+1}">
+          <span class="rk">${i+1}</span>
+          <div class="r-meta"><div class="r-name">${g.name||g.id}</div><div class="r-team">${meta.team||""}</div></div>
+          ${gbarsHTML(g,scale,gkeys,glabel)}
+          <span class="score-badge">${g.weighted!=null?g.weighted:0}</span>
+        </div>`;
+      }).join("")}</div>`;
+    }
   }
   host.innerHTML=headHTML+bodyHTML+legend;
 }
@@ -4463,7 +4146,10 @@ async function saveResultPng(){
   if(!LAST_RESULTS||!Bridge.savePng) return;
   const btn=$("#resSavePng"); setBtnLoading(btn,true);
   try{
-    const dataUrl=await svgToPng(buildResultsPoster(LAST_RESULTS),1080,1920);
+    // ekrandaki görünümü direkt yakala; sorun olursa poster'a düş
+    let dataUrl;
+    try{ dataUrl=await domToPng($("#resStage"),2); }
+    catch(e){ console.warn("domToPng başarısız, poster yedeği:",e); dataUrl=await svgToPng(buildResultsPoster(LAST_RESULTS),1080,1920); }
     const fname=((CONFIG.jam.name||"JamDeck").replace(/[^\w\-]+/g,"_"))+"_Sonuclar.png";
     const res=await Bridge.savePng(dataUrl,fname);
     if(res&&res.ok) toast(t("vote_png_saved"),"success");
@@ -4493,6 +4179,8 @@ function wireResults(){
   };
   const png=$("#resSavePng"); if(png) png.onclick=saveResultPng;
   const xls=$("#resSaveXlsx"); if(xls) xls.onclick=saveResultXlsx;
+  const full=$("#resFull"); if(full) full.onclick=()=>navigate("resultstage");
+  const ex=$("#resStageExit"); if(ex) ex.onclick=()=>navigate("results");
 }
 async function mountResults(){
   // elde sonuç yoksa ve sunucu çalışıyorsa taze sonuçları dene
@@ -4503,7 +4191,210 @@ async function mountResults(){
     }catch(e){}
   }
   await ensureGamesLoaded();
-  renderResults();
+  const games=((LAST_RESULTS&&LAST_RESULTS.games)||[]);
+  if(!games.length){ setResultsHeadVisible(true); renderResults(); return; }   // sonuç yok → mevcut boş durum
+  if(cerForceAll){ cerForceAll=false; revealAllResults(); return; }             // törenden geldi → direkt tüm sonuç
+  showResultsGate();   // KAZA KORUMASI: her girişte sor
+}
+
+/* sonuç başlığındaki aksiyon butonları (segment/tam ekran/kaydet) — kapı açıkken gizli */
+function setResultsHeadVisible(on){
+  ["#resultSeg","#resFull","#resSavePng","#resSaveXlsx"].forEach(s=>{ const e=$(s); if(e) e.style.display=on?"":"none"; });
+}
+/* logo başlığı (renderResults ile aynı dil) */
+function resultsHeadHTML(){
+  const logo=CONFIG.jam.logo;
+  const logoPart=logo?`<img src="${logo}" alt="">`:`<div class="logo-ph">GAME JAM<br>LOGO</div>`;
+  return `<div class="stage-head">${logoPart}</div>`;
+}
+/* spoiler kapısı: Tümünü Göster / Adım Adım Aç (Tören) */
+function showResultsGate(){
+  const host=$("#resStage"); if(!host) return;
+  setResultsHeadVisible(false);
+  const n=((LAST_RESULTS&&LAST_RESULTS.games)||[]).length;
+  host.innerHTML=resultsHeadHTML()+`
+    <div class="res-gate">
+      <div class="rg-head"><h2>${t("res_gate_title")}</h2><div class="rg-sub">${t("res_gate_sub")}</div></div>
+      <div class="rg-choices">
+        <button class="rg-card" id="rgAll"><span class="rg-ic">📊</span><b>${t("res_gate_all")}</b><span>${t("res_gate_all_sub")}</span></button>
+        <button class="rg-card" id="rgCer"><span class="rg-ic">🏆</span><b>${t("res_gate_ceremony")}</b><span>${t("res_gate_ceremony_sub")}</span></button>
+      </div>
+      <div class="rg-depth" id="rgDepth" hidden>
+        <div class="rg-sub">${t("cer_depth_title")}</div>
+        <div class="seg" id="rgDepthSeg">
+          <button data-d="3" ${n<3?"disabled":""}>${t("cer_depth_3")}</button>
+          <button data-d="5" class="active">${t("cer_depth_5")}</button>
+          <button data-d="custom">${t("cer_depth_custom")}</button>
+        </div>
+        <div class="rg-custom" id="rgCustom" hidden>
+          <label for="rgCustomN">${t("cer_custom_label")}</label>
+          <input type="number" id="rgCustomN" min="1" max="${n}" value="${Math.min(5,n)}">
+        </div>
+        <button class="btn btn-primary" id="rgStart">${t("cer_start")}</button>
+      </div>
+    </div>`;
+  $("#rgAll").onclick=revealAllResults;
+  $("#rgCer").onclick=()=>{ $("#rgCer").classList.add("active"); $("#rgAll").classList.remove("active"); $("#rgDepth").hidden=false; };
+  const seg=$("#rgDepthSeg");
+  seg.onclick=e=>{ const b=e.target.closest("button"); if(!b||b.disabled) return;
+    $$("#rgDepthSeg button").forEach(x=>x.classList.toggle("active",x===b));
+    $("#rgCustom").hidden=(b.dataset.d!=="custom"); };
+  $("#rgStart").onclick=()=>{
+    const act=$("#rgDepthSeg button.active"); const d=act&&act.dataset.d;
+    let depth=(d==="custom")?parseInt(($("#rgCustomN").value||"5"),10):parseInt(d,10);
+    depth=Math.max(1,Math.min(depth||5,n));
+    CEREMONY.depth=depth; navigate("ceremony");
+  };
+}
+/* "Tümünü Göster": başlık aksiyonlarını geri getir + mevcut tam görünüm */
+function revealAllResults(){ setResultsHeadVisible(true); renderResults(); }
+
+/* ============================================================
+   ÖDÜL TÖRENİ — sondan başa sinematik açıklama
+   ============================================================ */
+function startCeremony(){
+  const r=LAST_RESULTS;
+  const games=((r&&r.games)||[]).slice().sort((a,b)=>(b.weighted||0)-(a.weighted||0));
+  if(!games.length){ navigate("results"); return; }
+  CEREMONY.list=games;
+  CEREMONY.depth=Math.max(1,Math.min(CEREMONY.depth||5,games.length));
+  CEREMONY.order=[]; for(let rk=CEREMONY.depth; rk>=1; rk--) CEREMONY.order.push(rk);
+  CEREMONY.pos=0; CEREMONY.lock=false;
+  const cv=$("#cerFx");
+  if(CEREMONY.fx){ CEREMONY.fx.destroy(); CEREMONY.fx=null; }
+  if(cv){ CEREMONY.fx=makeEffectController(cv); CEREMONY.fx.setEffect("fireflies",26,.6); CEREMONY.fx.setEnabled(true); }
+  cerRender(false);
+}
+function stopCeremony(){ if(CEREMONY.fx){ CEREMONY.fx.destroy(); CEREMONY.fx=null; } cerBurstStop(); }
+function exitCeremony(){ navigate("results"); }
+
+/* kalan dereceye göre arka plan efektini yoğunlaştır (1.'ye doğru artar) */
+function cerSetFx(rank){
+  const fx=CEREMONY.fx, total=CEREMONY.depth; if(!fx) return;
+  if(rank==null){ fx.setEffect("fireflies",26,.6); return; }
+  if(rank>3){ const k=(total-rank+1)/total; fx.setEffect("orbs", Math.round(16+k*26), .5+k*.55); }
+  else if(rank===3){ fx.setEffect("confetti",70,.9); }
+  else if(rank===2){ fx.setEffect("confetti",120,1.15); }
+  else { fx.setEffect("confetti",230,1.45); }   // 1.
+}
+function cerCover(meta){
+  return meta.cover ? `<div class="cer-cover" style="background-image:url('${meta.cover}')"></div>`
+                    : `<div class="cer-cover ph">🎮</div>`;
+}
+/* kenar konfeti topu — sağ ve sol kenardan içeri/yukarı doğru patlatır (her açılışta) */
+function cerBurstSize(){
+  const b=cerBurst; if(!b) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  b.w=b.canvas.clientWidth; b.h=b.canvas.clientHeight;
+  b.canvas.width=Math.round(b.w*dpr); b.canvas.height=Math.round(b.h*dpr);
+  b.ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function cerBurstLoop(){
+  const b=cerBurst; if(!b){ return; }
+  b.ctx.clearRect(0,0,b.w,b.h);
+  for(let i=b.parts.length-1;i>=0;i--){ const p=b.parts[i];
+    p.vy+=0.28; p.vx*=0.992; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life++;
+    const a=p.life>p.max?Math.max(0,1-(p.life-p.max)/28):1;
+    if(a<=0||p.y>b.h+24){ b.parts.splice(i,1); continue; }
+    b.ctx.save(); b.ctx.translate(p.x,p.y); b.ctx.rotate(p.rot); b.ctx.globalAlpha=a;
+    b.ctx.fillStyle=p.col; b.ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.62); b.ctx.restore();
+  }
+  b.ctx.globalAlpha=1;
+  b.raf = b.parts.length ? requestAnimationFrame(cerBurstLoop) : null;
+}
+function cerFireSides(power){
+  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv=$("#cerBurst"); if(!cv) return;
+  if(!cerBurst) cerBurst={canvas:cv, ctx:cv.getContext("2d"), parts:[], raf:null, w:0, h:0};
+  const b=cerBurst; cerBurstSize();
+  const c=themeColors(); const pal=[c.accent,c.accent2,c.text,"#ffd700","#ff3d7f"];
+  const n=Math.round(34*power);
+  const launch=(fromLeft)=>{
+    for(let i=0;i<n;i++){
+      const ang=rnd(0.32,1.18);                 // yataydan yukarı doğru açı
+      const sp=rnd(8,16)*(0.85+power*0.28);
+      b.parts.push({
+        x:fromLeft?-6:b.w+6, y:b.h*rnd(.5,.92),
+        vx:(fromLeft?1:-1)*Math.cos(ang)*sp, vy:-Math.sin(ang)*sp,
+        s:rnd(6,13), rot:rnd(0,6.28), vr:rnd(-.34,.34),
+        col:pal[Math.floor(Math.random()*pal.length)], life:0, max:rnd(55,110)
+      });
+    }
+  };
+  launch(true); launch(false);
+  if(!b.raf) cerBurstLoop();
+}
+function cerBurstStop(){
+  if(!cerBurst) return;
+  if(cerBurst.raf) cancelAnimationFrame(cerBurst.raf);
+  if(cerBurst.ctx&&cerBurst.w>0) cerBurst.ctx.clearRect(0,0,cerBurst.w,cerBurst.h);
+  cerBurst=null;
+}
+function cerRender(animate){
+  const stage=$("#cerStage"); if(!stage) return;
+  const C=CEREMONY, total=C.depth, scale=(LAST_RESULTS&&LAST_RESULTS.scale)||10;
+  const showAll=$("#cerShowAll"), count=$("#cerCount"), prev=$("#cerPrev");
+  // intro (henüz açılış yok)
+  if(C.pos===0){
+    const logo=CONFIG.jam.logo;
+    const logoPart=logo?`<img src="${logo}" alt="">`:"";
+    stage.innerHTML=`<div class="cer-intro">${logoPart}<h1>${t("cer_intro_title")}</h1><div class="hint">${t("cer_intro_hint")}</div></div>`;
+    if(animate) cerSetFx(null);
+    if(count) count.textContent=`0 / ${total}`;
+    if(prev) prev.style.visibility="hidden";
+    if(showAll) showAll.hidden=true;
+    return;
+  }
+  const rank=C.order[C.pos-1];
+  const g=C.list[rank-1]||{}, meta=gameMeta(g.id);
+  const cls=rank===1?"r-gold cer-anim-gold":rank===2?"r-silver cer-anim-silver":rank===3?"r-bronze cer-anim-bronze":((total-rank)%2?"cer-anim-flip":"cer-anim-up");
+  const badge=(rank<=3)
+    ? `<span class="cer-medal">${MEDALS[rank-1]||""}</span>`
+    : `<span class="cer-rank">${rank}<small>.</small></span>`;
+  // sağ mini liste: bu açılış HARİÇ açıklananlar (artan sırada)
+  const revealed=C.order.slice(0,C.pos).filter(rk=>rk!==rank).sort((a,b)=>a-b);
+  const miniHTML=revealed.length?`<div class="cer-mini">${revealed.map(rk=>{
+    const gg=C.list[rk-1]||{};
+    return `<div class="cm-row"><span class="cm-rk">${rk}</span><span class="cm-name">${gg.name||gg.id||""}</span><span class="cm-sc">${gg.weighted!=null?gg.weighted:0}</span></div>`;
+  }).join("")}</div>`:"";
+  stage.innerHTML=`<div class="cer-reveal ${cls}">
+      <div class="cer-badge">${badge}</div>
+      ${cerCover(meta)}
+      <span class="cer-team">${meta.team||""}</span>
+      <span class="cer-name">${g.name||g.id||""}</span>
+      <span class="cer-score">${g.weighted!=null?g.weighted:0}<small>/${scale}</small></span>
+    </div>${miniHTML}`;
+  if(animate){
+    cerSetFx(rank);
+    // her yeni oyunda sağ+sol kenardan konfeti patlaması (1.'ye doğru güçlenir)
+    cerFireSides(rank===1?2.6:rank===2?1.9:rank===3?1.5:1);
+    if(rank===1){ const fl=$("#cerFlash"); if(fl){ fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go"); } }
+  }
+  if(count) count.textContent=`${total-rank+1} / ${total}`;
+  if(prev) prev.style.visibility="visible";
+  if(showAll){
+    showAll.hidden=(C.pos<total);
+    if(C.pos>=total) showAll.innerHTML=`📊 ${t("cer_show_all")}`;
+  }
+}
+function cerNext(){
+  const C=CEREMONY;
+  if(C.lock) return;
+  if(C.pos>=C.depth){ cerForceAll=true; navigate("results"); return; }   // son dereceden sonra → tüm sıralama
+  C.lock=true; C.pos++; cerRender(true);
+  setTimeout(()=>{ C.lock=false; }, 420);
+}
+function cerBack(){
+  const C=CEREMONY;
+  if(C.lock || C.pos<=0) return;
+  C.pos--; cerRender(false);
+  cerSetFx(C.pos===0?null:C.order[C.pos-1]);   // efekt yoğunluğunu geri al
+}
+function wireCeremony(){
+  const ex=$("#cerExit"); if(ex) ex.onclick=exitCeremony;
+  const sa=$("#cerShowAll"); if(sa) sa.onclick=()=>{ cerForceAll=true; navigate("results"); };
+  const pv=$("#cerPrev"); if(pv) pv.onclick=e=>{ e.stopPropagation(); cerBack(); };
+  const stg=$("#cerStage"); if(stg) stg.onclick=cerNext;
 }
 
 /* ============================================================
@@ -4511,13 +4402,14 @@ async function mountResults(){
    ============================================================ */
 let currentScreen="download";
 function navigate(id){
+  if(currentScreen==="ceremony" && id!=="ceremony") stopCeremony();   // tören efektini/raf'ı temizle
   currentScreen=id;
   if(id!=="voting") stopVotePolling();
   $$(".screen").forEach(s=>s.classList.remove("active"));
   $("#screen-"+id)?.classList.add("active");
   $$(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.nav===id));
-  // Sunum + QR + Sayaç sahnesi = tam ekran kiosk: sidebar gizli, çıkış ✕ veya ESC
-  document.body.classList.toggle("kiosk-mode", id==="launcher"||id==="qr"||id==="countdownstage");
+  // Sunum + QR + Sayaç + Sonuç sahnesi + Tören = tam ekran kiosk: sidebar gizli, çıkış ✕ veya ESC
+  document.body.classList.toggle("kiosk-mode", id==="launcher"||id==="qr"||id==="countdownstage"||id==="resultstage"||id==="ceremony");
   if(id==="launcher"){ ensureGamesLoaded(); }
   if(id!=="setup" && window.unmountSetup) window.unmountSetup(); // efekt önizlemeleri boşa dönmesin
   if(id==="setup" && window.mountSetup) window.mountSetup();
@@ -4526,6 +4418,8 @@ function navigate(id){
   if(id==="guide") renderGuide();
   if(id==="voting") renderVoting();
   if(id==="results") mountResults();
+  if(id==="resultstage") renderResults("#resStageFull");
+  if(id==="ceremony") startCeremony();
   if(id==="qr") renderQrStage();
   const m=$("#main"); if(m) m.scrollTop=0;
 }
@@ -4561,16 +4455,19 @@ function setBtnLoading(btn,on,txt){
    TEXT RE-RENDER (language switch)
    ============================================================ */
 window.__rerenderText=function(){
+  localizeVoteDefaults();   // dil değişince varsayılan kategori/grup etiketlerini de güncelle
   $$("[data-t]").forEach(n=>{ if(n.dataset.t==="guide_main") return; n.textContent=t(n.dataset.t); });
   $$("[data-t-text='jamname']").forEach(n=>n.textContent=CONFIG.jam.name);
   $$("[data-t-text='jamtag']").forEach(n=>n.textContent=CONFIG.jam.tagline||"");
   const s=$("#llSearch"); if(s)s.placeholder=t("search_games");
-  $$("#sideLang button, #suLang button").forEach(b=>b.classList.toggle("active",b.dataset.lang===LANG));
+  $$("#sideLang, #suLang").forEach(sel=>{ if(sel)sel.value=LANG; });
   if(currentScreen==="launcher"){ renderHero(); renderGameRows($("#llSearch")?.value||""); }
   if(currentScreen==="setup"&&window.refreshSetupText) window.refreshSetupText();
   if(currentScreen==="guide") renderGuide();
   if(currentScreen==="voting") renderVoting();
-  if(currentScreen==="results") renderResults();
+  if(currentScreen==="results"){ if($("#resStage .res-gate")) showResultsGate(); else renderResults(); }   // kapı açıkken sonuç sızdırma
+  if(currentScreen==="resultstage") renderResults("#resStageFull");
+  if(currentScreen==="ceremony"){ const pv=$("#cerPrev"); if(pv) pv.textContent=t("cer_prev"); const ex=$("#cerExit"); if(ex) ex.title=t("cer_exit"); cerRender(false); }
   if(currentScreen==="countdown") renderCountdownSetup();
   if(currentScreen==="countdownstage") renderCountdownStage();
 };
@@ -4608,13 +4505,14 @@ async function init(){
   if(!CONFIG.update) CONFIG.update={auto:true};
   LANG = CONFIG.jam.language || "tr";
   document.documentElement.setAttribute("lang",LANG);
+  if(CONFIG.voting) localizeVoteDefaults();   // varsayılan kategori/grup etiketlerini dile çevir
   applyConfig(CONFIG);
 
   // build shell
   const app=$("#app");
   app.insertAdjacentHTML("afterbegin", renderSidebar());
   const main=el(`<div class="main" id="main"></div>`);
-  main.innerHTML = screenDownload()+screenLauncher()+screenCountdown()+screenCountdownStage()+screenVoting()+screenResults()+screenGuide()+screenQr()+ (window.renderSetup?window.renderSetup():"");
+  main.innerHTML = screenDownload()+screenLauncher()+screenCountdown()+screenCountdownStage()+screenVoting()+screenResults()+screenResultStage()+screenCeremony()+screenGuide()+screenQr()+ (window.renderSetup?window.renderSetup():"");
   app.appendChild(main);
 
   // effects
@@ -4622,12 +4520,12 @@ async function init(){
   applyEffectFromConfig();
 
   // wire
-  wireDownload(); wireLauncher(); wireTimerEvents(); wireGuide(); wireResults(); wireQrStage(); wireCountdown();
+  wireDownload(); wireLauncher(); wireTimerEvents(); wireGuide(); wireResults(); wireCeremony(); wireQrStage(); wireCountdown();
   if(window.wireSetup) window.wireSetup();
 
   // nav
   $$("[data-nav]").forEach(b=>b.onclick=()=>navigate(b.dataset.nav));
-  $$("#sideLang button").forEach(b=>b.onclick=()=>{ setLanguage(b.dataset.lang); CONFIG.jam.language=LANG; });
+  { const sl=$("#sideLang"); if(sl) sl.onchange=e=>{ setLanguage(e.target.value); CONFIG.jam.language=LANG; Bridge.saveConfig(CONFIG); }; }
 
   // ESC: tam ekran Sunum/QR sahnesinden çık (✕ ile aynı)
   document.addEventListener("keydown", e=>{
@@ -4635,6 +4533,16 @@ async function init(){
     if(currentScreen==="launcher") navigate("download");
     else if(currentScreen==="qr") navigate("voting");
     else if(currentScreen==="countdownstage") navigate("countdown");
+    else if(currentScreen==="resultstage") navigate("results");
+    else if(currentScreen==="ceremony") exitCeremony();
+  });
+  // Tören sahnesi klavye kontrolü: ESC çıkış (ayrı), ←/Backspace/PageUp geri, DİĞER HER TUŞ ileri
+  document.addEventListener("keydown", e=>{
+    if(currentScreen!=="ceremony") return;
+    if(e.key==="Escape") return;   // çıkış üstteki handler'da
+    if(e.key==="ArrowLeft"||e.key==="Backspace"||e.key==="PageUp"){ e.preventDefault(); cerBack(); return; }
+    if(e.ctrlKey||e.altKey||e.metaKey) return;   // kısayolları bozma
+    e.preventDefault(); cerNext();
   });
 
   // sayaç tiki: sahne güncellemesi + T-10dk oto tam ekran kontrolü

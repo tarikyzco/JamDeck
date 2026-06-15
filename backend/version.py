@@ -4,7 +4,7 @@ Yeni sürüm çıkarırken yalnız APP_VERSION değişir; arayüz (sidebar + Kur
 güncelleme kartı) ve güncelleme denetimi bu değeri getAppInfo() üzerinden okur.
 """
 
-APP_VERSION = "2.0.1"
+APP_VERSION = "2.0.3"
 
 # Güncellemelerin denetlendiği GitHub deposu — uygulamaya gömülü (UI'da görünmez).
 UPDATE_REPO = "tarikyzco/JamDeck"

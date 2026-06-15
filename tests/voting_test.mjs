@@ -113,15 +113,16 @@ await page.click('[data-grp-access="jury"] button[data-val="codes"]');
 await page.waitForTimeout(150);
 step('switch -> Codes shows code-count field', !!(await page.$('[data-grp-count="jury"]')));
 
-// 6. start server -> status chip ok, links appear
+// 6. start server -> status chip ok; Online (funnel) public links appear after tunnel ready
+// (LAN modu kaldırıldı; tek yol Online. Mock funnel ~450ms'de public URL verir.)
 await page.click('#voteToggle');
-await page.waitForTimeout(600);
+await page.waitForTimeout(1000);
 const statusOn = !!(await page.$('#voteStatus .chip-ok'));
 const links = await page.$$('#voteLinks .link-row');
 step('start -> status ON', statusOn);
 step('vote links rendered (enabled groups)', links.length === 3, `count=${links.length}`);
 const firstUrl = await page.$eval('.link-row .url', el => el.textContent).catch(()=>'');
-step('link is a LAN URL', /^http:\/\/.+\/v\/.+/.test(firstUrl), firstUrl);
+step('link is a public vote URL', /^https?:\/\/.+\/v\/.+/.test(firstUrl), firstUrl);
 
 // 7. live panel = participation counter only (scores HIDDEN until finalize)
 await page.waitForTimeout(600);
@@ -153,6 +154,10 @@ await page.evaluate(() => { if (Bridge) Bridge.__xlsxCalls = 0; });
 await page.click('#voteFinalize');
 await page.waitForTimeout(900);
 step('finalize navigates to Results', await page.$eval('#screen-results', el => el.classList.contains('active')).catch(()=>false));
+// spoiler kapısı (Tören Modu özelliği): tam sıralamayı görmek için "Tümünü Göster"
+step('results gate shown after finalize', !!(await page.$('#resStage .res-gate')));
+await page.click('#rgAll');
+await page.waitForTimeout(300);
 const pods = (await page.$$('.pod')).length;
 step('Top-3 podium rendered', pods === 3, `pods=${pods}`);
 const firstScore = await page.$eval('.pod.first .score-badge', el => el.textContent.trim()).catch(()=>'');

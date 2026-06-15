@@ -16,6 +16,67 @@ from pathlib import Path
 APP_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_FILE = APP_DIR / "jam_settings.json"
 
+
+def _i18n_file() -> Path:
+    """Tek kaynak çeviri dosyası — dev'de proje kökü/frontend, frozen'da _MEIPASS/frontend."""
+    base = Path(getattr(sys, "_MEIPASS", APP_DIR.parent))
+    return base / "frontend" / "i18n.js"
+
+
+_I18N_CACHE = None
+
+
+def load_i18n() -> dict:
+    """frontend/i18n.js'i (lang -> {app, voter, countdown}) önbellekli döndürür.
+
+    Dosya tek kaynaktır; tarayıcı <script src> ile, Python ise `window... = {…};`
+    sarmalayıcısının içindeki JSON gövdesini ayıklayarak okur.
+    """
+    global _I18N_CACHE
+    if _I18N_CACHE is None:
+        try:
+            with open(_i18n_file(), "r", encoding="utf-8") as f:
+                txt = f.read()
+            _I18N_CACHE = json.loads(txt[txt.index("{"):txt.rindex("}") + 1])
+        except Exception:
+            _I18N_CACHE = {}
+    return _I18N_CACHE
+
+
+def i18n_section(section: str, lang: str) -> dict:
+    """Belirli bir bölümü (app/voter/countdown) verilen dil için döndürür; tr'ye düşer."""
+    data = load_i18n()
+    src = data.get(lang) or data.get("tr") or {}
+    return src.get(section, {})
+
+
+def localize_vote_defaults(voting_cfg: dict, lang: str) -> dict:
+    """Varsayılan kategori/grup etiketlerini verilen dile çevirir (yerinde).
+
+    Bir etiket, herhangi bir dildeki varsayılana eşitse 'değiştirilmemiş varsayılan'
+    sayılır ve o anki dile çevrilir; kullanıcının yazdığı özel adlar korunur.
+    """
+    if not voting_cfg:
+        return voting_cfg
+    data = load_i18n()
+    cat_sets, grp_sets = {}, {}
+    for d in data.values():
+        vd = (d or {}).get("vote_defaults", {})
+        for cid, lbl in (vd.get("cat") or {}).items():
+            cat_sets.setdefault(cid, set()).add(lbl)
+        for gid, lbl in (vd.get("grp") or {}).items():
+            grp_sets.setdefault(gid, set()).add(lbl)
+    cur = (data.get(lang) or data.get("tr") or {}).get("vote_defaults", {})
+    cur_cat, cur_grp = cur.get("cat", {}), cur.get("grp", {})
+    for c in voting_cfg.get("categories", []) or []:
+        cid = c.get("id")
+        if cid in cat_sets and c.get("label") in cat_sets[cid] and cid in cur_cat:
+            c["label"] = cur_cat[cid]
+    for gid, g in (voting_cfg.get("groups", {}) or {}).items():
+        if gid in grp_sets and (g or {}).get("label") in grp_sets[gid] and gid in cur_grp:
+            g["label"] = cur_grp[gid]
+    return voting_cfg
+
 BANNED_EXES = {
     "UnityCrashHandler64.exe", "UnityCrashHandler.exe",
     "Uninstall.exe", "unins000.exe", "dxwebsetup.exe",
@@ -61,6 +122,7 @@ DEFAULT_CONFIG = {
     "voting": {
         "enabled": False,
         "port": 8770,
+        "mode": "internet",   # "internet" (önerilen) | "lan" — Başlat'ta hangi yol
         "scale": 10,
         "categories": [
             {"id": "overall",     "label": "Genel",        "weight": 30, "enabled": True},
@@ -443,6 +505,7 @@ class JamDeckAPI:
         self._active_overlay = None
         self._voting = None  # VotingServer instance (lazy)
         self._voting_info = {}
+        self._tunnel = None  # Cloudflare quick tunnel (internet voting)
         self._active_game_id = None
         self._active_web_server = None   # local HTTP server for a running web game
         self._active_web_profile = None  # temp browser user-data-dir to clean up
@@ -1152,11 +1215,15 @@ class JamDeckAPI:
         # voter sayfası organizatörün temasıyla servis edilir
         full_cfg = self._load_config()
         theme = full_cfg.get("theme", {}) or {}
+        lang = (full_cfg.get("jam", {}) or {}).get("language", "tr")
+        # değiştirilmemiş varsayılan kategori/grup etiketlerini jam diline çevir
+        localize_vote_defaults(cfg, lang)
         brand = {
             "jamName": (full_cfg.get("jam", {}) or {}).get("name", ""),
             "colors": theme.get("colors", {}) or {},
             "radius": theme.get("radius"),
             "glow": theme.get("glow"),
+            "language": lang,
         }
         if self._voting is not None and self._voting.is_running:
             self._voting.stop()
@@ -1205,6 +1272,7 @@ class JamDeckAPI:
             return "error"
 
     def stopVoting(self):
+        self._stop_tunnel()
         if self._voting is not None:
             try:
                 self._voting.stop()
@@ -1212,6 +1280,106 @@ class JamDeckAPI:
                 pass
         self._voting_info = {}
         return {"ok": True}
+
+    # ---------------------------------------------------- internet voting (Tailscale Funnel)
+    def _tun(self):
+        try:
+            from backend import tunnel as tun
+        except Exception:
+            import tunnel as tun
+        return tun
+
+    def _stop_tunnel(self):
+        had = self._tunnel
+        self._tunnel = None
+        if isinstance(self._voting_info, dict):
+            self._voting_info.pop("publicUrl", None)
+        # funnel kapatmayı UI'ı BLOKLAMADAN, ve yalnız gerçekten açıldıysa yap
+        # (tailscale komutları yavaş/takılabilir → 'Durdur' butonu beklemesin)
+        if had:
+            def _off():
+                try:
+                    self._tun().funnel_stop()
+                except Exception:
+                    pass
+            threading.Thread(target=_off, daemon=True).start()
+
+    def getInternetVotingState(self):
+        """Tailscale hazır mı? UI 'İnternet oylaması' açılmadan durumu gösterir."""
+        try:
+            return self._tun().tailscale_state()
+        except Exception as e:
+            return {"installed": False, "loggedIn": False, "url": None, "msg": str(e)}
+
+    def startInternetVoting(self):
+        """Yerel oylama sunucusunu Tailscale Funnel ile SABİT bir public adrese açar
+        (https://makine.tailnet.ts.net — asla değişmez). Sonucu tunnel:ready{url} /
+        tunnel:error{error,detail} olayıyla bildirir (asenkron)."""
+        if self._voting is None or not self._voting.is_running:
+            return {"ok": False, "error": "not_running"}
+        if isinstance(self._voting_info, dict) and self._voting_info.get("publicUrl"):
+            return {"ok": True, "url": self._voting_info["publicUrl"], "already": True}
+        port = int(self._voting_info.get("port") or 8770)
+        tun = self._tun()
+
+        def run():
+            try:
+                # 1) Tailscale kurulu değilse launcher indirip kurar (tek UAC onayı)
+                if not tun.tailscale_state()["installed"]:
+                    self._emit("tunnel:progress", {"stage": "install", "pct": -1})
+                    tun.ensure_tailscale(progress_cb=lambda pct: self._emit(
+                        "tunnel:progress", {"stage": "install", "pct": pct}))
+                # 2) giriş yoksa login akışını tetikle + organizatörün girişini bekle
+                if not tun.tailscale_state()["loggedIn"]:
+                    self._emit("tunnel:progress", {"stage": "login", "pct": -1})
+                    tun.tailscale_up()
+                    deadline = time.time() + 180
+                    while time.time() < deadline:
+                        time.sleep(3)
+                        if tun.tailscale_state()["loggedIn"]:
+                            break
+                    else:
+                        self._emit("tunnel:error", {"error": "tailscale_not_logged_in",
+                                                    "detail": "login timeout"})
+                        return
+                # bağlanma sürerken oylama durdurulduysa funnel'ı hiç başlatma
+                if self._voting is None or not self._voting.is_running:
+                    return
+                # 3) Funnel → sabit public adres
+                self._emit("tunnel:progress", {"stage": "connect", "pct": -1})
+                url = tun.funnel_start(port)
+                self._tunnel = True
+                if isinstance(self._voting_info, dict):
+                    self._voting_info["publicUrl"] = url
+                self._emit("tunnel:ready", {"url": url})
+            except Exception as e:
+                self._stop_tunnel()
+                if e.__class__.__name__ == "FunnelNotEnabled":
+                    self._emit("tunnel:error", {"error": "funnel_not_enabled",
+                                                "enableUrl": getattr(e, "enable_url", ""),
+                                                "detail": getattr(e, "detail", "")})
+                else:
+                    msg = str(e)
+                    code = msg.split(":", 1)[0].strip()
+                    self._emit("tunnel:error", {"error": code, "detail": msg})
+
+        threading.Thread(target=run, daemon=True).start()
+        return {"ok": True}
+
+    def stopInternetVoting(self):
+        self._stop_tunnel()
+        return {"ok": True}
+
+    def openUrl(self, url):
+        """Verilen URL'yi varsayılan tarayıcıda aç (Funnel etkinleştirme linki vb.)."""
+        try:
+            import webbrowser
+            if isinstance(url, str) and url.startswith("http"):
+                webbrowser.open(url)
+                return {"ok": True}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+        return {"ok": False}
 
     def getVotingStatus(self):
         if self._voting is not None and self._voting.is_running:
@@ -1259,10 +1427,31 @@ class JamDeckAPI:
                 cg = self._voting.current_game
                 # surface the active game to the in-app screen (strip heavy cover)
                 res["current_game"] = {"id": cg["id"], "name": cg.get("name")} if cg else None
+                res["running"] = True
                 return res
             except Exception as e:
                 return {"error": str(e)}
-        return {"games": [], "running": False}
+        # Sunucu kapalı: yine de daha önce verilen oylar (votes.json) görünsün ki
+        # organizatör sunucuyu başlatmadan inceleyip sıfırlayabilsin.
+        try:
+            from backend.voting_server import VotingServer
+        except Exception:
+            from voting_server import VotingServer
+        try:
+            cfg = self._voting_cfg()
+            lang = (self._load_config().get("jam", {}) or {}).get("language", "tr")
+            localize_vote_defaults(cfg, lang)
+            srv = VotingServer()
+            srv.config = cfg
+            srv._load_votes()           # votes.json -> srv.votes (thread başlatmaz)
+            if not srv.votes:
+                return {"games": [], "running": False, "current_game": None}
+            res = srv.get_results()
+            res["running"] = False
+            res["current_game"] = None
+            return res
+        except Exception as e:
+            return {"games": [], "running": False, "current_game": None, "error": str(e)}
 
     def exportResults(self):
         """Save the detailed technical results as a formatted .xlsx the organizer
@@ -1420,11 +1609,16 @@ class JamDeckAPI:
     def _countdown_state(self):
         cfg = self._load_config()
         jam = cfg.get("jam", {})
+        lang = jam.get("language", "tr")
         return {
             "countdown": cfg.get("countdown", {}),
             "jam": {"name": jam.get("name"), "logo": jam.get("logo"),
-                    "language": jam.get("language", "tr")},
+                    "language": lang},
             "theme": {"colors": cfg.get("theme", {}).get("colors", {})},
+            # launcher'daki arka plan efekti tarayıcı/OBS sayfasına da yansısın
+            "effect": cfg.get("effect", {}),
+            # tek kaynak i18n.json'dan çözülmüş sayaç metinleri (pre/main/done/empty)
+            "cdtext": i18n_section("countdown", lang),
         }
 
     def startCountdownServer(self):

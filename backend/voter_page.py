@@ -7,7 +7,7 @@
 #   gate-pin / gate-code / vote / waiting / closed / full
 # The JS is validated by tests (node --check + real-browser Playwright test).
 
-VOTER_PAGE = """<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" id="metaTheme" content="#050a14"><title>__LABEL__ Oylaması</title><style>
+VOTER_PAGE = """<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" id="metaTheme" content="#050a14"><title>__LABEL__</title><style>
 /* ─── TEMA (organizatörün teması sunucu tarafından enjekte edilir) ─── */
 :root{
   --bg:#050a14; --bg-2:#080e1c;
@@ -68,6 +68,13 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
   display:grid; place-items:center; transition:color .15s, border-color .15s;
 }
 .mode-btn:active{transform:scale(.94)}
+.lang-sel{
+  height:32px; max-width:120px; border-radius:16px; border:1px solid var(--border);
+  background:color-mix(in srgb, var(--surface) 84%, transparent);
+  color:var(--text-muted); font:600 11.5px var(--font-body); cursor:pointer;
+  padding:0 10px; -webkit-appearance:none; appearance:none; text-align:center;
+}
+.lang-sel option{background:var(--surface); color:var(--text)}
 .toast{
   position:fixed; top:calc(10px + env(safe-area-inset-top)); left:50%; z-index:50;
   /* gizliyken opacity+visibility da kapalı — yoksa gölgesi üstte
@@ -136,6 +143,7 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 }
 @keyframes navPulse{50%{box-shadow:0 0 14px color-mix(in srgb, var(--warning) 35%, transparent)}}
 .game-card{position:relative; padding:13px 15px; display:flex; flex-direction:column; gap:3px}
+.game-card.live{padding-top:38px}   /* "şu an sunulan" rozeti üst şeritte; isim altında, çakışmaz */
 .game-card .g-team{font:700 10px var(--font-body); letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted)}
 .game-card .g-name{font:800 21px/1.15 var(--font-display); letter-spacing:-.015em}
 .live-badge{
@@ -230,10 +238,11 @@ body[data-state="waiting"] .waiting{display:flex}
 
 <div class="wrap">
   <header class="top">
-    <span class="group-name"><span class="gdot"></span>__LABEL__ Oylaması</span>
+    <span class="group-name" id="grpName"><span class="gdot"></span><span id="grpLabel">__LABEL__</span> <span id="vWord"></span></span>
     <span class="top-right">
       <span class="jam-id">__JAM__</span>
-      <button class="mode-btn" id="modeBtn" title="Açık / koyu tema">☀</button>
+      <select class="lang-sel" id="voterLang" aria-label="language"></select>
+      <button class="mode-btn" id="modeBtn" title="">☀</button>
     </span>
   </header>
 
@@ -242,7 +251,7 @@ body[data-state="waiting"] .waiting{display:flex}
     <div class="gate-title" id="gateTitle"></div>
     <div class="gate-sub" id="gateSub"></div>
     <input class="gate-input" id="gateInput" type="text" autocomplete="one-time-code" autocapitalize="characters" enterkeyhint="go">
-    <button class="gate-btn" id="gateBtn">Onayla</button>
+    <button class="gate-btn" id="gateBtn"></button>
     <div class="gate-err" id="gateErr"></div>
   </div>
 
@@ -254,28 +263,29 @@ body[data-state="waiting"] .waiting{display:flex}
 
   <nav class="nav" id="nav">
     <button class="nav-btn" id="prevBtn" hidden></button>
-    <button class="nav-btn highlight" id="nextBtn" hidden>Sıradaki oyun →</button>
+    <button class="nav-btn highlight" id="nextBtn" hidden></button>
   </nav>
 
   <div id="gameContainer">
     <div class="card game-card" id="gameCard"></div>
     <div class="card waiting">
       <span class="ic">🎮</span>
-      <b>Henüz aktif oyun yok</b>
-      <p>Düzenleyici bir oyun başlattığında burada görünecek.</p>
+      <b id="waitTitle"></b>
+      <p id="waitSub"></p>
     </div>
   </div>
 
   <div id="ratingArea">
     <div id="cats"></div>
-    <button class="submit-btn" id="submitBtn" disabled>Oyu Gönder</button>
+    <button class="submit-btn" id="submitBtn" disabled></button>
   </div>
 
   <div class="status" id="status"></div>
-  <div class="dbg" id="dbg">durum: bağlanıyor…</div>
+  <div class="dbg" id="dbg"></div>
 </div>
 
 <script>
+/*__I18N__*/
 /* Safari üst/alt çubuk rengi = aktif temanın --bg değeri (enjekte tema + açık mod dahil) */
 function syncMetaTheme(){
   var m=document.getElementById('metaTheme');if(!m)return;
@@ -301,11 +311,39 @@ const TOKEN=location.pathname.split('/').pop();
 const SCALE=__SCALE__;
 let voterId=localStorage.getItem('jamdeck_voter');
 if(!voterId){voterId='v_'+Math.random().toString(36).substr(2,9);localStorage.setItem('jamdeck_voter',voterId);}
-let games=[],idx=-1,cats=[],selected={},enabled=true,groupLabel='',submitted=false,currentId=null;
+let games=[],idx=-1,cats=[],selected={},enabled=true,groupLabel='',groupId='',submitted=false,currentId=null;
+function applyStaticI18n(){
+  document.getElementById('vWord').textContent=S.voting_word;
+  document.title=document.getElementById('grpLabel').textContent+' '+S.voting_word;
+  document.getElementById('modeBtn').title=S.mode_toggle;
+  document.getElementById('gateBtn').textContent=S.confirm;
+  document.getElementById('nextBtn').textContent=S.next_game;
+  document.getElementById('waitTitle').textContent=S.no_game_title;
+  document.getElementById('waitSub').textContent=S.no_game_sub;
+  if(!submitted) document.getElementById('submitBtn').textContent=S.submit;
+}
+function relabelCats(){
+  cats.forEach(function(c){ var n=document.querySelector('.cat-block[data-cid="'+c.id+'"] .cat-name');
+    if(n) n.textContent=localCatLabel(c.id,c.label); });
+}
+function setVoterLang(code){
+  if(!I18N[code]) return; LANG=code; S=I18N[code];
+  try{ localStorage.setItem('jamdeck_voter_lang',code); }catch(e){}
+  document.documentElement.setAttribute('lang',code);
+  applyStaticI18n(); updateSubmit(); relabelCats(); renderGame();
+}
+(function(){
+  var sel=document.getElementById('voterLang');
+  if(sel){ sel.innerHTML=LANGS.map(function(l){return '<option value="'+l.code+'"'+(l.code===LANG?' selected':'')+'>'+l.name+'</option>';}).join('');
+    sel.addEventListener('change',function(){ setVoterLang(this.value); }); }
+  document.documentElement.setAttribute('lang',LANG);
+  applyStaticI18n();
+  document.getElementById('dbg').textContent=S.status_label+': '+S.connecting;
+})();
 let access='open',authed=true,full=false;
 let toastTimer=null;
 function setState(st){document.body.dataset.state=st;}
-function accessErr(code){return ({bad_code:'Kod geçersiz.',code_used:'Bu kod başka bir cihazda kullanılmış.',bad_pin:'PIN yanlış.',full:'Kontenjan dolu.',rate:'Çok hızlı denedin, birkaç saniye bekle.','group disabled':'Bu grup kapalı.'})[code]||'Bir hata oluştu.';}
+function accessErr(code){return ({bad_code:S.err_bad_code,code_used:S.err_code_used,bad_pin:S.err_bad_pin,full:S.err_full,rate:S.err_rate,'group disabled':S.err_group_disabled})[code]||S.err_generic;}
 async function submitAccess(){
   const inp=document.getElementById('gateInput'),err=document.getElementById('gateErr'),btn=document.getElementById('gateBtn');
   const val=(inp.value||'').trim();if(!val)return;
@@ -317,7 +355,7 @@ async function submitAccess(){
     const data=await resp.json();
     if(data.ok){authed=true;document.getElementById('gate').dataset.mode='';renderGame();fetchCurrent();}
     else{err.textContent=accessErr(data.error);}
-  }catch(e){err.textContent='Bağlantı hatası';}
+  }catch(e){err.textContent=S.err_conn;}
   btn.disabled=false;
 }
 function catsKey(list){return list.map(c=>c.id).join(',');}
@@ -332,8 +370,8 @@ function showToast(msg,kind){
 function flashCard(){const gc=document.getElementById('gameCard');gc.classList.remove('flash');void gc.offsetWidth;gc.classList.add('flash');}
 function updateSubmit(){
   const b=document.getElementById('submitBtn');
-  if(submitted){b.disabled=true;b.classList.add('voted');b.textContent='✓ Oy Verildi';}
-  else{b.classList.remove('voted');b.textContent='Oyu Gönder';b.disabled=!allSelected();}
+  if(submitted){b.disabled=true;b.classList.add('voted');b.textContent=S.submitted;}
+  else{b.classList.remove('voted');b.textContent=S.submit;b.disabled=!allSelected();}
 }
 function resetSelection(){
   submitted=false;selected={};
@@ -346,9 +384,9 @@ function renderCats(list){
   submitted=false;selected={};
   const host=document.getElementById('cats');host.innerHTML='';
   list.forEach(c=>{
-    const block=document.createElement('div');block.className='card cat-block';
+    const block=document.createElement('div');block.className='card cat-block';block.dataset.cid=c.id;
     const lbl=document.createElement('div');lbl.className='cat-label';
-    const name=document.createElement('span');name.textContent=c.label;
+    const name=document.createElement('span');name.className='cat-name';name.textContent=localCatLabel(c.id,c.label);
     const picked=document.createElement('span');picked.className='picked';
     lbl.appendChild(name);lbl.appendChild(picked);
     const row=document.createElement('div');row.className='rating';
@@ -382,15 +420,15 @@ function setDisabledMsg(title,sub){
 }
 function renderGame(){
   const gate=document.getElementById('gate');
-  if(!enabled){setState('closed');setDisabledMsg('Bu oy grubu kapalı.','Düzenleyici bu grubu şu an oylamaya kapattı.');return;}
-  if(full){setState('full');setDisabledMsg('Kontenjan dolu.','Bu grup için katılımcı limiti doldu. Düzenleyiciye danışın.');return;}
+  if(!enabled){setState('closed');setDisabledMsg(S.closed_title,S.closed_sub);return;}
+  if(full){setState('full');setDisabledMsg(S.full_title,S.full_sub);return;}
   if(access!=='open'&&!authed){
     setState(access==='pin'?'gate-pin':'gate-code');
     if(gate.dataset.mode!==access){
       gate.dataset.mode=access;
       document.getElementById('gateIc').textContent=(access==='pin')?'🔒':'🎟️';
-      document.getElementById('gateTitle').textContent=(access==='pin')?'PIN gerekli':'Erişim kodu gerekli';
-      document.getElementById('gateSub').textContent=(access==='pin')?'Düzenleyicinin verdiği PIN ile giriş yap.':'Sana verilen tek-kullanımlık kodu gir.';
+      document.getElementById('gateTitle').textContent=(access==='pin')?S.gate_pin_title:S.gate_code_title;
+      document.getElementById('gateSub').textContent=(access==='pin')?S.gate_pin_sub:S.gate_code_sub;
       document.getElementById('gateErr').textContent='';
       const inp=document.getElementById('gateInput');
       inp.placeholder=(access==='pin')?'····':'········';
@@ -405,41 +443,79 @@ function renderGame(){
   if(g){
     setState('vote');
     const gc=document.getElementById('gameCard');
-    const liveBadge=(g.id===currentId)?'<span class="live-badge"><span class="ldot"></span>Şu an sunulan</span>':'';
+    const isLive=(g.id===currentId);
+    const liveBadge=isLive?'<span class="live-badge"><span class="ldot"></span>'+S.live_now+'</span>':'';
+    gc.classList.toggle('live', isLive);   // rozet varken içeriği aşağı it (çakışma yok)
     gc.innerHTML=liveBadge+'<span class="g-team"></span><span class="g-name"></span>';
-    gc.querySelector('.g-team').textContent=groupLabel;
+    gc.querySelector('.g-team').textContent=localGrpLabel(groupId,groupLabel);
     gc.querySelector('.g-name').textContent=g.name;
   }else{
     setState('waiting');
   }
   updateNav();
 }
-async function submitVote(silent){
-  const g=displayed();if(!g)return false;
-  const st=document.getElementById('status');
-  try{
-    const resp=await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t:TOKEN,game_id:g.id,scores:selected,voter:voterId})});
-    const data=await resp.json();
-    if(data.ok){
-      if(!silent){st.textContent='✓ Oyunuz kaydedildi';st.className='status ok';setTimeout(()=>{st.textContent='';st.className='status';},3000);}
-      return true;
-    }
-    if(!silent){st.textContent='✗ Hata: '+(data.error||'');st.className='status err';}
-    return false;
-  }catch(e){if(!silent){st.textContent='✗ Bağlantı hatası';st.className='status err';}return false;}
+// ===== GÜVENİLİR OY TESLİMİ (outbox / giden kutusu) =====
+// Oy İDEMPOTENT: sunucu (grup,oyun,voter) ile UPSERT eder → aynı oyu kaç kez
+// göndersen çift oy olmaz, sadece güncellenir. Bu yüzden başarılı olana dek
+// SONSUZ retry GÜVENLİDİR: 502/ağ hatası/rate olsa bile oy ASLA kaybolmaz
+// (cihaz bağlı kaldıkça). Bekleyen oylar localStorage'da → sayfa yenilense veya
+// bağlantı kopsa bile korunur ve eninde sonunda teslim edilir.
+const OUTBOX_KEY='jamdeck_outbox_'+TOKEN;
+let outbox={};
+try{ outbox=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'{}')||{}; }catch(e){ outbox={}; }
+function saveOutbox(){ try{ localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox)); }catch(e){} }
+function pendingCount(){ return Object.keys(outbox).length; }
+function setStatus(msg,cls){ const st=document.getElementById('status'); if(st){ st.textContent=msg; st.className='status'+(cls?(' '+cls):''); } }
+function reflectDelivery(){
+  if(pendingCount()>0){ setStatus(S.vote_sending||'gönderiliyor…',''); }
+  else { setStatus(S.vote_saved,'ok'); setTimeout(function(){ if(pendingCount()===0) setStatus('',''); },3000); }
 }
+function enqueueVote(game_id,scores){
+  outbox[game_id]={scores:scores,ts:Date.now()};
+  saveOutbox();
+  setStatus(S.vote_sending||'gönderiliyor…','');
+  flushOutbox();   // hemen dene
+}
+let _flushing=false;
+async function flushOutbox(){
+  if(_flushing||pendingCount()===0) return; _flushing=true;
+  try{
+    for(const gid of Object.keys(outbox)){
+      const item=outbox[gid];
+      try{
+        const resp=await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({t:TOKEN,game_id:gid,scores:item.scores,voter:voterId})});
+        if(resp.status===200){ delete outbox[gid]; saveOutbox(); continue; }
+        // KALICI ret (full/need_access/unknown_game…) → kuyruktan düş; sonsuz denenmesin
+        let err=''; try{ err=(await resp.json()).error||''; }catch(e){}
+        if(['full','need_access','unknown_game','group disabled','invalid token','missing token','invalid score','no valid scores','missing fields'].indexOf(err)>=0){
+          delete outbox[gid]; saveOutbox();
+        }
+        // 429/5xx/diğer GEÇİCİ → bırak, sonraki turda yeniden denenir
+      }catch(e){ /* ağ hatası / 502 → bırak, yeniden denenir */ }
+    }
+  } finally { _flushing=false; reflectDelivery(); }
+}
+// arka plan: bekleyen oy varsa başarılı olana dek her 3 sn'de bir yeniden dene
+setInterval(function(){ flushOutbox(); },3000);
+window.addEventListener('online',flushOutbox);   // ağ geri gelince hemen dene
+let _curEtag=null, _pollMs=__POLL_MS__;
 async function fetchCurrent(){
   const dbg=document.getElementById('dbg');
   try{
-    const resp=await fetch('/api/current?t='+TOKEN+'&voter='+encodeURIComponent(voterId));
+    const resp=await fetch('/api/current?t='+TOKEN+'&voter='+encodeURIComponent(voterId),
+      {cache:'no-store', headers:_curEtag?{'If-None-Match':_curEtag}:{}});
+    _pollMs=+resp.headers.get('X-Poll-Ms')||_pollMs;   // sunucu kişi sayısına göre aralığı söyler (dinamik)
+    if(resp.status===304) return;   // durum değişmedi → eldeki ekran aynen kalır (sunucu yükü ~sıfır)
+    _curEtag=resp.headers.get('ETag')||_curEtag;
     const data=await resp.json();
     if(!data.ok){
       setState('closed');
-      setDisabledMsg('Bağlantı geçersiz veya eski.','Düzenleyiciden GÜNCEL oy linkini isteyin.');
-      if(dbg)dbg.textContent='durum: ok=false ('+resp.status+') — token geçersiz/eski';
+      setDisabledMsg(S.token_invalid_title,S.token_invalid_sub);
+      if(dbg)dbg.textContent=S.status_label+': ok=false ('+resp.status+')';
       return;
     }
-    enabled=data.enabled;groupLabel=data.label||'';currentId=data.current!=null?data.current:null;
+    enabled=data.enabled;groupLabel=data.label||'';groupId=data.group||'';currentId=data.current!=null?data.current:null;
     access=data.access||'open';authed=(data.authed!==undefined)?data.authed:(access==='open');full=!!data.full;
     const newCats=data.categories||[];
     if(catsKey(newCats)!==catsKey(cats)){cats=newCats;renderCats(cats);}
@@ -451,20 +527,22 @@ async function fetchCurrent(){
     if(!authed){idx=games.length-1;}  // kapıda: sessizce en yeniyi izle
     else if(idx<0){idx=games.length-1;}
     else if(newGameArrived&&wasLatest){
-      if(allSelected()){await submitVote(true);idx=games.length-1;resetSelection();flashOnRender=true;}
-      else{showToast('🎮 Sıradaki oyun başladı! Bu oyunu bitirip "Sıradaki oyun →" butonuna bas.','warn');}
+      if(allSelected()){const prev=displayed(); if(prev)enqueueVote(prev.id,Object.assign({},selected)); idx=games.length-1;resetSelection();flashOnRender=true;}
+      else{showToast(S.next_started_warn,'warn');}
     }
-    else if(newGameArrived){showToast('🎮 Yeni oyun başladı','warn');}
+    else if(newGameArrived){showToast(S.new_game,'warn');}
     if(idx>=games.length)idx=games.length-1;
-    if(dbg)dbg.textContent='durum: grup='+data.group+' · gösterilen='+(displayed()?displayed().name:'(yok)')+' · oyun='+games.length;
+    if(dbg)dbg.textContent=S.status_label+': '+data.group+' · '+(displayed()?displayed().name:S.none)+' · '+games.length;
     renderGame();
-    if(flashOnRender){flashCard();showToast('✓ Oyunuz kaydedildi · Yeni oyun: '+(displayed()?displayed().name:''));}
-  }catch(e){if(dbg)dbg.textContent='durum: bağlantı hatası — '+e;}
+    if(flashOnRender){flashCard();showToast(S.vote_saved_new+(displayed()?displayed().name:''));}
+  }catch(e){if(dbg)dbg.textContent=S.status_label+': '+S.err_conn+' — '+e;}
 }
-fetchCurrent();setInterval(fetchCurrent,2000);
+// DİNAMİK poll: sabit aralık yerine her seferinde sunucunun önerdiği (X-Poll-Ms) süre
+// kadar bekleyip tekrar sor. Az kişi → hızlı, çok kişi → seyrek (funnel yükü sabit kalır).
+(function loopPoll(){ fetchCurrent().finally(function(){ setTimeout(loopPoll, _pollMs); }); })();
 document.getElementById('prevBtn').addEventListener('click',function(){if(idx>0){idx--;resetSelection();renderGame();}});
 document.getElementById('nextBtn').addEventListener('click',function(){if(idx<games.length-1){idx=games.length-1;resetSelection();renderGame();flashCard();}});
-document.getElementById('submitBtn').addEventListener('click',async function(){if(this.disabled)return;this.disabled=true;const ok=await submitVote(false);if(ok)submitted=true;updateSubmit();});
+document.getElementById('submitBtn').addEventListener('click',function(){if(this.disabled)return;const g=displayed();if(!g)return;enqueueVote(g.id,Object.assign({},selected));submitted=true;updateSubmit();});
 document.getElementById('gateBtn').addEventListener('click',submitAccess);
 document.getElementById('gateInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitAccess();});
 document.getElementById('gameCard').addEventListener('animationend',function(){this.classList.remove('flash');});
@@ -478,7 +556,7 @@ document.getElementById('gameCard').addEventListener('animationend',function(){t
 # Placeholder'lar: __LABEL__ / __JAM__ / /*__THEME__*/  (f-string DEĞİL).
 # ─────────────────────────────────────────────────────────────────────────────
 
-CODES_PAGE = """<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" id="metaTheme" content="#050a14"><title>__LABEL__ Kod Panosu</title><style>
+CODES_PAGE = """<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" id="metaTheme" content="#050a14"><title>__LABEL__</title><style>
 :root{
   --bg:#050a14; --bg-2:#080e1c;
   --surface:#0f1629; --surface-2:#141d33; --border:#1e293b;
@@ -510,6 +588,10 @@ body{
 }
 .top .group-name .gdot{width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:var(--glow)}
 .top .jam-id{font:600 10.5px var(--font-mono); color:var(--text-muted); letter-spacing:.06em; white-space:nowrap}
+.lang-sel{height:30px; max-width:120px; border-radius:15px; border:1px solid var(--border);
+  background:color-mix(in srgb, var(--surface) 84%, transparent); color:var(--text-muted);
+  font:600 11.5px var(--font-body); cursor:pointer; padding:0 10px; -webkit-appearance:none; appearance:none}
+.lang-sel option{background:var(--surface); color:var(--text)}
 .card{
   background:color-mix(in srgb, var(--surface) 84%, transparent);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
@@ -563,32 +645,60 @@ h1{font:800 17px var(--font-display); letter-spacing:.02em; margin-bottom:4px}
 <div class="toast" id="toast"></div>
 <div class="wrap">
   <div class="top">
-    <span class="group-name"><span class="gdot"></span>__LABEL__ · KODLAR</span>
-    <span class="jam-id">__JAM__</span>
+    <span class="group-name" id="grpName"><span class="gdot"></span><span id="grpLabel">__LABEL__</span> · <span id="codesWord"></span></span>
+    <span style="display:flex;align-items:center;gap:8px">
+      <span class="jam-id">__JAM__</span>
+      <select class="lang-sel" id="voterLang" aria-label="language"></select>
+    </span>
   </div>
   <div class="card">
-    <h1>Erişim Kodları</h1>
-    <p class="hint">Boş bir koda dokun → kopyalanır → oylama sayfasındaki kapıda kullan.
-    Kullanılan kod bu panoda <b>herkes için anında</b> kapanır; başkasının kodunu deneme.</p>
+    <h1 id="codesH1"></h1>
+    <p class="hint" id="codesHint"></p>
     <div class="meter">
       <span class="chip" id="meter">— / —</span>
-      <span class="chip" id="freeChip"><b>—</b>&nbsp;boş</span>
+      <span class="chip" id="freeChip"></span>
     </div>
-    <div class="grid" id="grid"><div class="empty">Yükleniyor…</div></div>
-    <a class="gobtn" id="goVote" href="#">🗳️ Oylamaya Git</a>
+    <div class="grid" id="grid"></div>
+    <a class="gobtn" id="goVote" href="#"></a>
   </div>
 </div>
 <script>
+/*__I18N__*/
 var TOKEN=location.pathname.split('/k/')[1]||'';
 document.getElementById('goVote').href='/v/'+TOKEN;
-var lastSig='';
+var lastSig='', lastData=null;
+function applyStaticI18n(){
+  document.getElementById('codesWord').textContent=S.codes_word;
+  document.title=document.getElementById('grpLabel').textContent+' '+S.codes_page_title;
+  document.getElementById('codesH1').textContent=S.codes_h1;
+  document.getElementById('codesHint').innerHTML=S.codes_hint_a+'<b>'+S.codes_hint_b+'</b>'+S.codes_hint_c;
+  document.getElementById('goVote').textContent=S.go_vote;
+}
+function setVoterLang(code){
+  if(!I18N[code]) return; LANG=code; S=I18N[code];
+  try{ localStorage.setItem('jamdeck_voter_lang',code); }catch(e){}
+  document.documentElement.setAttribute('lang',code);
+  applyStaticI18n();
+  if(lastData) render(lastData);
+  else{ document.getElementById('freeChip').innerHTML='<b>—</b>&nbsp;'+S.free;
+        document.getElementById('grid').innerHTML='<div class="empty">'+S.loading+'</div>'; }
+}
+(function(){
+  var sel=document.getElementById('voterLang');
+  if(sel){ sel.innerHTML=LANGS.map(function(l){return '<option value="'+l.code+'"'+(l.code===LANG?' selected':'')+'>'+l.name+'</option>';}).join('');
+    sel.addEventListener('change',function(){ setVoterLang(this.value); }); }
+  document.documentElement.setAttribute('lang',LANG);
+  applyStaticI18n();
+  document.getElementById('freeChip').innerHTML='<b>—</b>&nbsp;'+S.free;
+  document.getElementById('grid').innerHTML='<div class="empty">'+S.loading+'</div>';
+})();
 function toastMsg(m){
   var el=document.getElementById('toast'); el.textContent=m; el.classList.add('show');
   clearTimeout(el._t); el._t=setTimeout(function(){el.classList.remove('show');},1800);
 }
 function copyCode(code){
   // LAN http bağlamında navigator.clipboard çoğu mobil tarayıcıda YOK → execCommand fallback
-  function done(){ toastMsg('Kod kopyalandı: '+code); }
+  function done(){ toastMsg(S.copied+code); }
   if(navigator.clipboard && window.isSecureContext){
     navigator.clipboard.writeText(code).then(done).catch(function(){fallback();});
   } else fallback();
@@ -596,14 +706,14 @@ function copyCode(code){
     var ta=document.createElement('textarea'); ta.value=code;
     ta.style.position='fixed'; ta.style.opacity='0';
     document.body.appendChild(ta); ta.focus(); ta.select();
-    try{ document.execCommand('copy'); done(); }catch(e){ toastMsg('Kod: '+code); }
+    try{ document.execCommand('copy'); done(); }catch(e){ toastMsg(S.code_label+code); }
     document.body.removeChild(ta);
   }
 }
 function render(data){
   var grid=document.getElementById('grid');
   if(data.access!=='codes'){
-    grid.innerHTML='<div class="empty">Bu grup şu an kod kullanmıyor.</div>';
+    grid.innerHTML='<div class="empty">'+S.not_codes+'</div>';
     document.getElementById('meter').textContent='—';
     document.getElementById('freeChip').innerHTML='';
     return;
@@ -614,12 +724,12 @@ function render(data){
     var c=codes[i];
     if(c.claimed) used++;
     h+= c.claimed
-      ? '<div class="code used"><span class="cv">'+c.code+'</span><span class="st">KULLANILDI</span></div>'
-      : '<div class="code" data-code="'+c.code+'"><span class="cv">'+c.code+'</span><span class="st">DOKUN = KOPYALA</span></div>';
+      ? '<div class="code used"><span class="cv">'+c.code+'</span><span class="st">'+S.used_state+'</span></div>'
+      : '<div class="code" data-code="'+c.code+'"><span class="cv">'+c.code+'</span><span class="st">'+S.tap_copy+'</span></div>';
   }
-  grid.innerHTML=h||'<div class="empty">Kod yok — yöneticiden isteyin.</div>';
-  document.getElementById('meter').innerHTML='<b>'+used+'</b> / '+codes.length+' kullanıldı';
-  document.getElementById('freeChip').innerHTML='<b>'+(codes.length-used)+'</b>&nbsp;boş';
+  grid.innerHTML=h||'<div class="empty">'+S.no_codes+'</div>';
+  document.getElementById('meter').innerHTML='<b>'+used+'</b> / '+codes.length+' '+S.used_count;
+  document.getElementById('freeChip').innerHTML='<b>'+(codes.length-used)+'</b>&nbsp;'+S.free;
   var free=grid.querySelectorAll('.code[data-code]');
   for(var j=0;j<free.length;j++){
     (function(el){ el.addEventListener('click',function(){copyCode(el.getAttribute('data-code'));}); })(free[j]);
@@ -631,8 +741,8 @@ function poll(){
     .then(function(d){
       if(!d.ok) return;
       var sig=JSON.stringify([d.access,d.codes]);
-      if(sig!==lastSig){ lastSig=sig; render(d); }
+      lastData=d; if(sig!==lastSig){ lastSig=sig; render(d); }
     }).catch(function(){});
 }
-poll(); setInterval(poll,2500);
+poll(); setInterval(poll,__POLL_MS__);
 </script></body></html>"""

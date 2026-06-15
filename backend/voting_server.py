@@ -1,8 +1,10 @@
 import os
 import re
 import json
+import glob
 import html
 import time
+import shutil
 import socket
 import secrets
 import threading
@@ -17,6 +19,56 @@ except ImportError:
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOTES_FILE = os.path.join(MODULE_DIR, "votes.json")
 ACCESS_FILE = os.path.join(MODULE_DIR, "access.json")
+
+import sys as _sys
+_I18N_CACHE = None
+
+
+def _load_i18n():
+    """Tek kaynak frontend/i18n.js (lang -> {app, voter, countdown}); JSON gövdesi ayıklanır."""
+    global _I18N_CACHE
+    if _I18N_CACHE is None:
+        base = getattr(_sys, "_MEIPASS", os.path.dirname(MODULE_DIR))
+        try:
+            with open(os.path.join(base, "frontend", "i18n.js"), encoding="utf-8") as f:
+                txt = f.read()
+            _I18N_CACHE = json.loads(txt[txt.index("{"):txt.rindex("}") + 1])
+        except Exception:
+            _I18N_CACHE = {}
+    return _I18N_CACHE
+
+
+_LANG_NAMES = {"tr": "Türkçe", "en": "English", "fr": "Français",
+               "de": "Deutsch", "es": "Español", "pt": "Português", "ja": "日本語"}
+
+
+def voter_i18n_block(lang):
+    """Voter/Codes sayfasına gömülecek JS: TÜM diller + varsayılan kategori/grup
+    etiketleri + dil listesi. Telefondaki oy veren kendi dilini seçebilir (organizatörün
+    dili varsayılan); seçim cihazda (localStorage) hatırlanır. Sunucuya gidiş yok."""
+    data = _load_i18n()
+    langs = list(data.keys()) or ["tr"]
+    if lang not in data:
+        lang = "tr" if "tr" in data else langs[0]
+    voter = {l: (data[l] or {}).get("voter", {}) for l in langs}
+    vd = {l: (data[l] or {}).get("vote_defaults", {"cat": {}, "grp": {}}) for l in langs}
+    meta = [{"code": l, "name": _LANG_NAMES.get(l, l)} for l in langs]
+
+    def js(o):
+        return json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
+
+    return ("const LANG_DEFAULT=%s; const I18N=%s; const VD=%s; const LANGS=%s; "
+            "let LANG=(function(){try{var s=localStorage.getItem('jamdeck_voter_lang');"
+            "return (s&&I18N[s])?s:LANG_DEFAULT;}catch(e){return LANG_DEFAULT;}})(); "
+            "let S=I18N[LANG]||I18N[LANG_DEFAULT]; "
+            "const VD_SETS=(function(){var c={},g={};for(var l in VD){var v=VD[l]||{},"
+            "cc=v.cat||{},gg=v.grp||{};for(var i in cc){(c[i]=c[i]||[]).push(cc[i]);}"
+            "for(var i in gg){(g[i]=g[i]||[]).push(gg[i]);}}return{cat:c,grp:g};})(); "
+            "function localCatLabel(id,lbl){var s=VD_SETS.cat[id];if(s&&s.indexOf(lbl)>=0){"
+            "var cur=(VD[LANG]||{}).cat||{};return cur[id]||lbl;}return lbl;} "
+            "function localGrpLabel(id,lbl){var s=VD_SETS.grp[id];if(s&&s.indexOf(lbl)>=0){"
+            "var cur=(VD[LANG]||{}).grp||{};return cur[id]||lbl;}return lbl;}"
+            % (js(lang), js(voter), js(vd), js(meta)))
 
 # Human-friendly code alphabet — no easily-confused chars (no O/0/I/1/L).
 CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -125,6 +177,11 @@ class VotingServer:
         self.launched_games = {}   # id -> name (votes stay open for all of these)
         self.config = {}
         self.votes = []
+        self._vote_index = {}      # (group,game_id,voter) -> votes listesi indeksi (O(1) upsert)
+        self._dirty = False        # kaydedilmemiş oy var mı (biriktirilmiş yazma)
+        self._flush_thread = None
+        self._state_ver = 0        # /api/current ETag'i: yalnız oyun/config değişince artar (oylar artırmaz)
+        self._seen = {}            # voter_id -> son görülme ts (dinamik poll için aktif kişi sayısı)
         self.tokens = {}
         self.admin_token = ""
         self.httpd = None
@@ -182,6 +239,8 @@ class VotingServer:
         self.running = True
         self._thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
         self._thread.start()
+        self._flush_thread = threading.Thread(target=self._flush_loop, daemon=True)
+        self._flush_thread.start()
 
         lan_ip = get_lan_ip()
         self.port = port
@@ -209,11 +268,20 @@ class VotingServer:
     def stop(self):
         if self.httpd and self.running:
             self.running = False
+            # bekleyen oyları kaybetmeden son kez diske yaz
+            with self._lock:
+                if self._dirty:
+                    self._dirty = False
+                    self._save_votes()
             self.httpd.shutdown()
             if self._thread:
                 self._thread.join()
             self.httpd = None
         return {"ok": True}
+
+    def _bump(self):
+        """/api/current durum sürümünü artır → açık pollar bir sonraki seferde 200 (taze) alır."""
+        self._state_ver += 1
 
     def set_current(self, game):
         self.current_game = game
@@ -223,10 +291,12 @@ class VotingServer:
                 if gid not in self.launched_games:
                     self.launched_order.append(gid)
                 self.launched_games[gid] = game.get("name", gid)
+        self._bump()
 
     def set_config(self, config):
         self.config = config
         self._sync_codes()
+        self._bump()
 
     def get_results(self):
         with self._lock:
@@ -299,6 +369,19 @@ class VotingServer:
                 })
 
             result_games.sort(key=lambda x: x["weighted"], reverse=True)
+
+            # KATILIM = oturum geneli TEKİL oy veren sayısı (kişi), oyların toplamı DEĞİL.
+            # Tek cihaz 3 ayrı oyuna oy verse bile o grup için 1 kişi sayılır.
+            session_voters = {}
+            for v in self.votes:
+                vid = v.get("voter")
+                if vid is not None:
+                    session_voters.setdefault(v.get("group"), set()).add(vid)
+            participants = {g: len(s) for g, s in session_voters.items()}
+            all_voter_ids = set()
+            for s in session_voters.values():
+                all_voter_ids |= s
+
             return {
                 "scale": scale,
                 "groups": {n: {"enabled": c.get("enabled", True), "weight": c["weight"], "label": c["label"]}
@@ -307,6 +390,8 @@ class VotingServer:
                                 "enabled": c.get("enabled", True)}
                                for c in self.config.get("categories", [])],
                 "games": result_games,
+                "participants": participants,            # grup -> tekil kişi sayısı
+                "participants_total": len(all_voter_ids),  # toplam tekil kişi
                 "current": self.current_game["id"] if self.current_game else None,
             }
 
@@ -428,28 +513,122 @@ class VotingServer:
         return self.running
 
     def _load_votes(self):
-        if os.path.exists(VOTES_FILE):
+        # ana dosya bozuksa .bak'tan kurtar (canlı etkinlikte veri kaybına karşı)
+        for path in (VOTES_FILE, VOTES_FILE + ".bak"):
+            if os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        self.votes = json.load(f)
+                    self._rebuild_index()
+                    return
+                except (json.JSONDecodeError, IOError):
+                    continue
+        self.votes = []
+        self._rebuild_index()
+
+    def _rebuild_index(self):
+        self._vote_index = {(v.get("group"), v.get("game_id"), v.get("voter")): i
+                            for i, v in enumerate(self.votes)}
+
+    def _poll_ms(self):
+        """Telefonların durum sorma aralığı (ms) — DİNAMİK: aktif kişi sayısına göre
+        otomatik ayarlanır. Az kişi → hızlı (responsive); çok kişi → yavaş (yük düşük).
+        Böylece toplam istek/sn ~sabit kalır (funnel sınırının altında) → kapasite artar.
+        config.pollSeconds verilirse SABİT olur (override). Aralık: 2.5–25 sn."""
+        cfg = (self.config or {})
+        if cfg.get("pollSeconds"):
             try:
-                with open(VOTES_FILE, "r", encoding="utf-8") as f:
-                    self.votes = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                self.votes = []
+                return int(max(1.5, float(cfg["pollSeconds"])) * 1000)
+            except (TypeError, ValueError):
+                pass
+        # CANLI STRES TESTİ DATASI (Tailscale Funnel): ≤50 req/s → %99.3-100;
+        # ~70 req/s → %99.6 (nadir 502); ~90 req/s → çöküş (%54). Hedefi güvenli
+        # bölgenin içine (45 req/s) koyuyoruz → ~%100, bol marj.
+        n = len(self._seen)              # aktif voter (flush thread 30 sn'de bir budar)
+        target_rps = 45.0
+        ms = int(n / target_rps * 1000)
+        # alt 2.5 sn (az kişide responsive), üst 25 sn (çok kişide yük düşük; ~1250 kişiye
+        # kadar req/s 45 altında kalır, sonra hafif tırmanır ama 70'e (güvenli) ~1750'de ulaşır)
+        return max(2500, min(25000, ms))
+
+    def _flush_loop(self):
+        """Biriktirilmiş kayıt: oylar her POST'ta değil, en fazla ~1.5 sn'de bir
+        diske yazılır → yazma yolundaki O(n²)/disk darboğazı kalkar. Kilit kısa
+        süre (tek dosya yazımı) tutulur; bu sıklıkta önemsiz."""
+        while self.running:
+            time.sleep(1.5)
+            if self._dirty:
+                with self._lock:
+                    self._dirty = False
+                    self._save_votes()
+            # aktif-voter sayacını buda: 30 sn'dir sormayan ayrılmış sayılır (dinamik poll)
+            if self._seen:
+                cutoff = time.time() - 30
+                for v in [v for v, ts in list(self._seen.items()) if ts < cutoff]:
+                    self._seen.pop(v, None)
 
     def _save_votes(self):
+        """Oyları çökmeye/bozulmaya dayanıklı kaydet: önce .tmp'ye yaz + fsync,
+        eski sağlam dosyayı .bak'a kopyala (tek-adım geri — yanlış sıfırlamayı bile
+        kurtarır), sonra atomik os.replace. Ayrıca zaman damgalı anlık görüntü."""
         try:
-            with open(VOTES_FILE, "w", encoding="utf-8") as f:
+            tmp = VOTES_FILE + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(self.votes, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            if os.path.exists(VOTES_FILE):
+                try:
+                    shutil.copy2(VOTES_FILE, VOTES_FILE + ".bak")
+                except OSError:
+                    pass
+            os.replace(tmp, VOTES_FILE)   # atomik: yarım yazılmış dosya asla kalmaz
+            self._snapshot_votes()
         except IOError:
+            pass
+
+    def _snapshot_votes(self):
+        """Dolu oy durumunun zaman damgalı yedeği (vote_backups/), en fazla 60 sn'de
+        bir, son 30 kopya tutulur. Boş durum yedeklenmez (yanlış sıfırlama iyi
+        anlık görüntüleri itip atmasın; geri alma için .bak zaten var)."""
+        if not self.votes:
+            return
+        now = time.time()
+        if now - getattr(self, "_last_snapshot", 0) < 60:
+            return
+        self._last_snapshot = now
+        try:
+            d = os.path.join(MODULE_DIR, "vote_backups")
+            os.makedirs(d, exist_ok=True)
+            ts = time.strftime("%Y%m%d-%H%M%S")
+            with open(os.path.join(d, "votes-%s.json" % ts), "w", encoding="utf-8") as f:
+                json.dump(self.votes, f, ensure_ascii=False, indent=2)
+            snaps = sorted(glob.glob(os.path.join(d, "votes-*.json")))
+            for old in snaps[:-30]:
+                try:
+                    os.remove(old)
+                except OSError:
+                    pass
+        except OSError:
             pass
 
     def reset_votes(self):
         """Wipe all collected votes (memory + votes.json) so the live counter /
         results start fresh. The launched-game list and current game are kept (a
-        mid-session reset shouldn't blank out voters' active game), and access
-        codes + their device claims are left intact (use 'Regenerate' for those)."""
+        mid-session reset shouldn't blank out voters' active game). Credential
+        seats (pin authorizations + code claims) are left intact (use 'Regenerate'
+        for those), but open-access auto-admit seats ARE freed so a fresh event
+        starts with an empty audience (open seats are participation, not a key)."""
         with self._lock:
             self.votes = []
+            self._vote_index = {}
+            self._dirty = False
+            for gname, gcfg in self.config.get("groups", {}).items():
+                if gcfg.get("access", "open") == "open":
+                    self.access["authorized"].pop(gname, None)
+            self._state_ver += 1
             self._save_votes()
+            self._save_access()
         return {"ok": True}
 
     # ----------------------------------------------------------- access control
@@ -547,8 +726,10 @@ class VotingServer:
                     seats = int(gcfg.get("limit", 0) or 0)
                     used = len(authorized)
                 else:  # open
-                    seats = int(gcfg.get("limit", 0) or 0)
-                    used = voter_count
+                    limit = int(gcfg.get("limit", 0) or 0)
+                    seats = limit
+                    # limitli open: koltuk = rezerve edilmiş giriş; limitsiz: katılım
+                    used = len(authorized) if limit > 0 else voter_count
                 out[gname] = {"access": access, "codes": codes,
                               "seats": seats, "used": used,
                               "limit": int(gcfg.get("limit", 0) or 0)}
@@ -558,16 +739,43 @@ class VotingServer:
         return len({v["voter"] for v in self.votes if v["group"] == group and v.get("voter")})
 
     def _is_authed(self, group, voter):
-        """Has this voter passed the gate for the group? Open groups need no gate."""
+        """Has this voter passed the gate for the group? Unlimited open groups
+        need no gate; open groups WITH a capacity limit require a reserved seat
+        (auto-admitted on first contact via _admit_open)."""
         gcfg = self.config.get("groups", {}).get(group, {})
         access = gcfg.get("access", "open")
-        if access == "open":
+        if access == "open" and int(gcfg.get("limit", 0) or 0) <= 0:
             return True
         return voter in self.access["authorized"].get(group, [])
 
+    def _admit_open(self, group, voter):
+        """Open-access seat reservation. For an open group WITH a capacity limit,
+        reserve a seat for this voter on first contact (auto-admit, no PIN/code).
+        Returns True if the voter holds/gets a seat, False if capacity is full.
+        No-op (always True) for unlimited-open and for pin/codes groups."""
+        gcfg = self.config.get("groups", {}).get(group, {})
+        if gcfg.get("access", "open") != "open":
+            return True  # pin/codes have their own gate
+        limit = int(gcfg.get("limit", 0) or 0)
+        if limit <= 0:
+            return True  # unlimited
+        if not voter:
+            return False
+        with self._lock:
+            authd = self.access["authorized"].setdefault(group, [])
+            if voter in authd:
+                return True
+            if len(authd) >= limit:
+                return False
+            authd.append(voter)
+            self._state_ver += 1   # seat count changed → voter ETags refresh
+            self._save_access()
+            return True
+
     def _seat_full(self, group, voter):
         """True if a NOT-yet-admitted voter cannot get a seat (capacity reached).
-        Already-admitted/already-voted voters are never 'full'."""
+        Already-admitted voters are never 'full'. For open+limit and pin, a seat
+        is a reserved admission; codes handle capacity at claim time."""
         gcfg = self.config.get("groups", {}).get(group, {})
         access = gcfg.get("access", "open")
         if access == "codes":
@@ -575,27 +783,30 @@ class VotingServer:
         limit = int(gcfg.get("limit", 0) or 0)
         if limit <= 0:
             return False
-        if access == "pin":
-            authd = self.access["authorized"].get(group, [])
-            return (voter not in authd) and (len(authd) >= limit)
-        # open: seat == having voted
-        voters = {v["voter"] for v in self.votes if v["group"] == group and v.get("voter")}
-        return (voter not in voters) and (len(voters) >= limit)
+        # pin and open(with limit): seat == reserved admission
+        authd = self.access["authorized"].get(group, [])
+        return (voter not in authd) and (len(authd) >= limit)
 
-    def _rate_ok(self, ip):
+    def _rate_ok(self, key):
+        """Per-key request throttle (key = voterId, IP'ye düşülebilir). voterId
+        kullanmak funnel arkasında şarttır: orada tüm seyirci tek IP görünür, IP
+        anahtarı 460 kişiyi tek kotaya sıkıştırırdı. voterId her cihaza kendi
+        kotasını verir. Tek-oy garantisi bu değil, oy upsert'idir."""
         rl = self.config.get("rateLimit", {})
         if not rl or not rl.get("enabled", True):
+            return True
+        if not key:
             return True
         window = float(rl.get("windowSec", 10))
         max_hits = int(rl.get("max", 8))
         now = time.time()
         with self._lock:
-            hits = [t for t in self._rate.get(ip, []) if now - t < window]
+            hits = [t for t in self._rate.get(key, []) if now - t < window]
             if len(hits) >= max_hits:
-                self._rate[ip] = hits
+                self._rate[key] = hits
                 return False
             hits.append(now)
-            self._rate[ip] = hits
+            self._rate[key] = hits
         return True
 
     def claim_access(self, group, voter, code=None, pin=None):
@@ -645,14 +856,29 @@ class VotingServer:
             def log_message(self, format, *args):
                 pass
 
-            def _send_json(self, data, status=200):
+            def _send_json(self, data, status=200, etag=None, poll_ms=None):
                 body = json.dumps(data, ensure_ascii=False).encode("utf-8")
                 self.send_response(status)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Expose-Headers", "ETag, X-Poll-Ms")
+                if etag:
+                    self.send_header("ETag", etag)
+                if poll_ms:
+                    self.send_header("X-Poll-Ms", str(poll_ms))
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
+
+            def _send_304(self, etag, poll_ms=None):
+                self.send_response(304)
+                self.send_header("ETag", etag)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Expose-Headers", "ETag, X-Poll-Ms")
+                if poll_ms:
+                    self.send_header("X-Poll-Ms", str(poll_ms))
+                self.send_header("Content-Length", "0")
+                self.end_headers()
 
             def _send_html(self, html_content, status=200):
                 body = html_content.encode("utf-8")
@@ -703,7 +929,9 @@ class VotingServer:
                                  .replace("__LABEL__", html.escape(label))
                                  .replace("__SCALE__", str(scale))
                                  .replace("__JAM__", html.escape(jam_name.upper()))
-                                 .replace("/*__THEME__*/", theme_css(brand)))
+                                 .replace("/*__THEME__*/", theme_css(brand))
+                                 .replace("__POLL_MS__", str(server._poll_ms()))
+                                 .replace("/*__I18N__*/", voter_i18n_block(brand.get("language", "tr"))))
                     self._send_html(html_page)
                     return
 
@@ -722,7 +950,9 @@ class VotingServer:
                     html_page = (CODES_PAGE
                                  .replace("__LABEL__", html.escape(label))
                                  .replace("__JAM__", html.escape(jam_name.upper()))
-                                 .replace("/*__THEME__*/", theme_css(brand)))
+                                 .replace("/*__THEME__*/", theme_css(brand))
+                                 .replace("__POLL_MS__", str(server._poll_ms()))
+                                 .replace("/*__I18N__*/", voter_i18n_block(brand.get("language", "tr"))))
                     self._send_html(html_page)
                     return
 
@@ -767,8 +997,17 @@ class VotingServer:
                     scale = server.config.get("scale", 10)
                     access = grp_cfg.get("access", "open")
                     voter = (query.get("voter") or [None])[0]
+                    if voter:
+                        server._seen[voter] = time.time()   # dinamik poll: aktif kişi sayacı
+                        server._admit_open(group, voter)    # open+limit: ilk temasta koltuk rezerve et
+                    pms = server._poll_ms()                  # bu yanıttaki önerilen poll aralığı
                     authed = server._is_authed(group, voter) if voter else (access == "open")
                     full = server._seat_full(group, voter) if voter else False
+                    # ETag: durum değişmediyse (oylama sürerken) 304 → sunucu neredeyse sıfır iş yapar
+                    etag = '"%d-%s-%d-%d"' % (server._state_ver, group, 1 if authed else 0, 1 if full else 0)
+                    if self.headers.get("If-None-Match") == etag:
+                        self._send_304(etag, poll_ms=pms)
+                        return
                     game_data = None
                     with server._lock:
                         cg = server.current_game
@@ -795,7 +1034,7 @@ class VotingServer:
                         "access": access,
                         "authed": authed,
                         "full": full,
-                    })
+                    }, etag=etag, poll_ms=pms)
                     return
 
                 if path == "/api/results":
@@ -822,13 +1061,16 @@ class VotingServer:
                 path = parsed.path.rstrip("/")
 
                 if path == "/api/access":
-                    if not server._rate_ok(self._client_ip()):
-                        self._send_json({"ok": False, "error": "rate"}, 429)
-                        return
                     try:
                         data = self._read_json()
                     except json.JSONDecodeError:
                         self._send_json({"ok": False, "error": "invalid json"}, 400)
+                        return
+                    # rate limit: voterId başına (funnel arkasında herkes tek IP
+                    # görünür → IP işe yaramaz; voterId her modda gerçek kimlik).
+                    # voterId yoksa IP'ye düş (savunma amaçlı yedek).
+                    if not server._rate_ok(data.get("voter") or self._client_ip()):
+                        self._send_json({"ok": False, "error": "rate"}, 429)
                         return
                     token = data.get("t")
                     with server._lock:
@@ -849,13 +1091,16 @@ class VotingServer:
                     return
 
                 if path == "/api/vote":
-                    if not server._rate_ok(self._client_ip()):
-                        self._send_json({"ok": False, "error": "rate"}, 429)
-                        return
                     try:
                         data = self._read_json()
                     except json.JSONDecodeError:
                         self._send_json({"ok": False, "error": "invalid json"}, 400)
+                        return
+                    # rate limit: voterId başına (funnel = tek IP; voterId gerçek
+                    # kimlik). Tek-oy garantisi ZATEN upsert'te (grup,oyun,voter);
+                    # bu yalnız tek cihazın istek selini/botu yavaşlatır.
+                    if not server._rate_ok(data.get("voter") or self._client_ip()):
+                        self._send_json({"ok": False, "error": "rate"}, 429)
                         return
                     token = data.get("t")
                     if not token:
@@ -877,11 +1122,16 @@ class VotingServer:
                     if not game_id or not voter or not isinstance(scores, dict) or not scores:
                         self._send_json({"ok": False, "error": "missing fields"}, 400)
                         return
+                    # open-access capacity: auto-reserve a seat on first contact
+                    # (a direct POST without a prior /api/current still gets gated)
+                    if not server._admit_open(group, voter):
+                        self._send_json({"ok": False, "error": "full"}, 403)
+                        return
                     # Faz 2 gate: pin/codes groups require prior /api/access authorization
                     if not server._is_authed(group, voter):
                         self._send_json({"ok": False, "error": "need_access"}, 403)
                         return
-                    # capacity (open/pin): reject a brand-new voter once seats are full
+                    # capacity (pin): reject a brand-new voter once seats are full
                     if server._seat_full(group, voter):
                         self._send_json({"ok": False, "error": "full"}, 403)
                         return
@@ -911,16 +1161,15 @@ class VotingServer:
                         return
                     game_name = launched[game_id]
                     with server._lock:
-                        # upsert by (group, game_id, voter)
-                        found = None
-                        for idx, v in enumerate(server.votes):
-                            if v["group"] == group and v["game_id"] == game_id and v["voter"] == voter:
-                                found = idx
-                                break
-                        if found is not None:
+                        # upsert by (group, game_id, voter) — O(1) index ile
+                        key = (group, game_id, voter)
+                        found = server._vote_index.get(key)
+                        if found is not None and found < len(server.votes) \
+                                and server.votes[found].get("voter") == voter:
                             server.votes[found]["scores"] = clean
                             server.votes[found]["ts"] = time.time()
                         else:
+                            server._vote_index[key] = len(server.votes)
                             server.votes.append({
                                 "group": group,
                                 "game_id": game_id,
@@ -929,7 +1178,7 @@ class VotingServer:
                                 "voter": voter,
                                 "ts": time.time()
                             })
-                        server._save_votes()
+                        server._dirty = True   # diske yazma flusher thread'e bırakılır
                     self._send_json({"ok": True})
                     return
 

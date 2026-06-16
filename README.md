@@ -41,7 +41,7 @@ Português · 日本語.
 |---|---|
 | 📥 **İndir & Hazırla** | itch.io jam arşivini tek tıkla indirir, zip/rar/7z/tar ve iç içe arşivleri açar, oyun adı + kapağı otomatik alır, bozuk teslimleri işaretler |
 | 🎬 **Sunum** | Tam ekran sahne: oyun listesi + dev kapak + tek tık başlatma; süre dolunca otomatik kapatma, web (HTML5/WebGL) oyunlar dahil |
-| 🗳️ **LAN Oylaması** | Jüri / Seyirci / Ekip telefondan oy verir (ağırlıklı kategoriler); tek kullanımlık erişim kodları, **canlı kod panosu** (kullanılan kod herkeste anında düşer), QR ekranı |
+| 🗳️ **Online Oylama** | Jüri / Seyirci / Ekip telefondan **online** oy verir (sabit link/QR, ~500 kişiye kadar stabil, aynı Wi-Fi gerekmez); ağırlıklı kategoriler, tek kullanımlık erişim kodları, **canlı kod panosu** (kullanılan kod herkeste anında düşer), QR ekranı |
 | 🏆 **Sonuçlar** | İlk 3 podyumu, grup kırılımları, paylaşılık PNG sonuç afişi + teknik .xlsx raporu |
 | ⏱️ **Sayaç** | 48 saatlik jam sayacı: 8 stil (Neon, LED, Pixel, Glitch, HP-Bar…), 3 logo alanı, başlamaya 10 dk kala **her ekrandan otomatik tam ekran**, OBS Browser-Source desteği |
 | 🎨 **Tema** | 16 hazır palet + tam renk/font/efekt özelleştirme; tema telefonlardaki oy sayfasına da yansır |

@@ -42,7 +42,7 @@ Português · 日本語.
 |---|---|
 | 📥 **Download & Prepare** | One-click itch.io jam archive download, extracts zip/rar/7z/tar and nested archives, pulls game name + cover automatically, flags broken submissions |
 | 🎬 **Presentation** | Fullscreen stage: game list + giant cover + one-click launch; auto-close on time-up, web (HTML5/WebGL) games included |
-| 🗳️ **LAN Voting** | Jury / Audience / Team vote from phones (weighted categories); single-use access codes, **live code board** (used codes flip instantly for everyone), QR screen |
+| 🗳️ **Online Voting** | Jury / Audience / Team vote from phones **online** (fixed link/QR, stable up to ~500 people, no shared Wi-Fi needed); weighted categories, single-use access codes, **live code board** (used codes flip instantly for everyone), QR screen |
 | 🏆 **Results** | Top-3 podium, per-group breakdowns, shareable PNG results poster + technical .xlsx report |
 | ⏱️ **Countdown** | 48-hour jam timer: 8 styles (Neon, LED, Pixel, Glitch, HP-Bar…), 3 logo slots, **auto-fullscreen from any screen** 10 minutes before start, OBS Browser-Source support |
 | 🎨 **Themes** | 16 presets + full color/font/effect customization; the theme carries over to the phone voting page |

@@ -4,7 +4,9 @@
 
 </div>
 
-# 🎮 JamDeck
+<p align="center"><img src="JamDeck.png" width="400" alt="JamDeck"></p>
+
+# JamDeck
 
 **Game jam'ler için hepsi-bir-arada masaüstü yönetim uygulaması** — oyunları
 itch.io'dan indirir, sahnede sunar, telefonlardan **online** oylatır (sabit link/QR,
@@ -14,9 +16,6 @@ sayımı mekan ekranına yansıtır. Her jam'e göre tamamen özelleştirilir.
 Português · 日本語.
 
 ![JamDeck arayüzü 7 dilde](docs/jamdeck-langs.gif)
-
-> ℹ️ **Not:** Uygulamanın kalıcı logosu henüz seçilmedi — şu anki simge geçici
-> bir yer tutucudur.
 
 ## ⬇️ İndir
 

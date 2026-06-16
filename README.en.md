@@ -4,7 +4,9 @@
 
 </div>
 
-# 🎮 JamDeck
+<p align="center"><img src="JamDeck.png" width="400" alt="JamDeck"></p>
+
+# JamDeck
 
 **All-in-one desktop toolkit for running game jams** — downloads builds from
 itch.io, presents them on stage, runs weighted **online** voting from phones
@@ -14,9 +16,6 @@ Available in **7 languages** — Türkçe · English · Français · Deutsch · 
 Português · 日本語.
 
 ![JamDeck interface in 7 languages](docs/jamdeck-langs.gif)
-
-> ℹ️ **Note:** The permanent logo hasn't been chosen yet — the current icon is
-> a temporary placeholder.
 
 ## ⬇️ Download
 

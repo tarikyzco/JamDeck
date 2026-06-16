@@ -702,13 +702,12 @@ class JamDeckAPI:
             games_dir = cfg.get("paths", {}).get("gamesDir", str(Path.home() / "JamGames"))
             os.makedirs(games_dir, exist_ok=True)
 
-            if shutil.which("itch-dl") is None:
-                self._emit("log", {
-                    "channel": "download", "level": "error",
-                    "line": "itch-dl not found — install with: pip install itch-dl",
-                })
-                self._emit("download:done", {"ok": False})
-                return
+            # itch-dl GÖMÜLÜ: frozen exe'de kendimizi "__itch-dl__" ile yeniden çağırırız
+            # (bundled itch_dl.cli.run); dev'de "python -m itch_dl". Harici CLI / pip yok.
+            if getattr(sys, "frozen", False):
+                cmd = [sys.executable, "__itch-dl__", url, "--api-key", apiKey]
+            else:
+                cmd = [sys.executable, "-m", "itch_dl", url, "--api-key", apiKey]
 
             self._emit("log", {"channel": "download", "level": "info", "line": f"Connecting to {url}…"})
 
@@ -718,7 +717,7 @@ class JamDeckAPI:
                 # bars contain non-ASCII bytes that the Windows default codec
                 # (cp1254 'charmap') chokes on ("can't decode byte 0x8e ...").
                 proc = subprocess.Popen(
-                    ["itch-dl", url, "--api-key", apiKey],
+                    cmd,
                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                     text=True, encoding="utf-8", errors="replace",
                     creationflags=flags, cwd=games_dir,

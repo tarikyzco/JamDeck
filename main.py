@@ -13,6 +13,13 @@ def resource_path(relative: str) -> Path:
 
 
 def main():
+    # GÖMÜLÜ itch-dl: frozen exe kendini bu argümanla yeniden çağırır → harici
+    # "itch-dl" CLI'ına (pip kurulumu) gerek kalmaz, her sistemde çalışır.
+    if len(sys.argv) > 1 and sys.argv[1] == "__itch-dl__":
+        from itch_dl.cli import run as _itch_run
+        sys.argv = ["itch-dl"] + sys.argv[2:]
+        sys.exit(_itch_run())
+
     if len(sys.argv) > 1 and sys.argv[1] == "--overlay":
         from backend.overlay import run_overlay
         mins = sys.argv[2] if len(sys.argv) > 2 else "5"

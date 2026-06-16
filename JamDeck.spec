@@ -1,12 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+# itch-dl artık uygulamaya GÖMÜLÜ: indirme harici "itch-dl" CLI'ına shell-out
+# etmek yerine, frozen exe kendini "__itch-dl__" argümanıyla yeniden çağırıp
+# bundled itch_dl.cli.run()'ı çalıştırır (her sistemde çalışır, pip kurulumu gerekmez).
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+
+_hidden = (collect_submodules('itch_dl')
+           + collect_submodules('bs4')
+           + ['lxml.etree', 'lxml._elementpath', 'tqdm', 'requests', 'certifi'])
+_datas = [('frontend', 'frontend')] + collect_data_files('certifi')
+
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('frontend', 'frontend')],
-    hiddenimports=[],
+    datas=_datas,
+    hiddenimports=_hidden,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

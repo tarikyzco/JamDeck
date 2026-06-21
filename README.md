@@ -4,9 +4,11 @@
 
 </div>
 
-<p align="center"><img src="JamDeck.png" width="400" alt="JamDeck"></p>
+<p align="center"><img src="JamDeck.png" width="400" alt="JamDeck — Game Jam Manager"></p>
 
-# JamDeck
+<p align="center"><b>Game Jam Manager</b> — itch.io teslim indirme · online oylama · 48 saat sayaç · sunum · sonuç töreni</p>
+
+# JamDeck — Game Jam Manager
 
 **Game jam'ler için hepsi-bir-arada masaüstü yönetim uygulaması** — oyunları
 itch.io'dan indirir, sahnede sunar, telefonlardan **online** oylatır (sabit link/QR,
@@ -69,9 +71,45 @@ Português · 日本語.
 Adım adım interaktif rehber — tüm ekranlar, SSS ve ipuçları içinde. Tarayıcıda doğrudan açılır;
 indirip çevrimdışı da kullanabilirsiniz.
 
+## ❓ Sık Sorulanlar
+
+**JamDeck nedir?**
+Game jam'lerin tüm operasyonel tarafını yürüten ücretsiz Windows uygulaması (bir
+"game jam manager"): itch.io'dan teslimleri indirir, sahnede sunar, telefonlardan
+online oy toplar, sonuçları törenle açıklar ve OBS/mekan ekranına 48 saatlik geri
+sayım koyar.
+
+**Kimler için?**
+Game jam ve hackathon düzenleyenler, üniversite oyun toplulukları, etkinlik
+sunucuları — sayaç, oylama ve sunumu ayrı ayrı kurmak yerine tek araç isteyenler.
+
+**İnternet gerekir mi?**
+Sunum ve sayaç çevrimdışı çalışır. Oylama internet üzerinden sabit bir public
+link/QR ile yürür; teslim indirme ve güncellemeler de internet ister.
+
+**Oylama nasıl çalışır? Hesap gerekir mi?**
+Seyirci sadece QR okutup telefonundan oy verir, hiçbir şey kurmaz. Organizatör ilk
+kullanımda bir kez ücretsiz Tailscale girişi yapar ki uygulama sabit oylama
+bağlantısını yayınlasın. Ağırlıklı kategoriler, tek kullanımlık kodlar, canlı kod
+panosu; ~500 kişiye kadar stabil.
+
+**Ücretsiz mi? Açık kaynak mı?**
+Tamamen ücretsiz ve **açık kaynaklı** — [GPL-3.0](LICENSE) lisansıyla.
+
+**Hangi platformlar?**
+Windows 10/11 (WebView2). Telefon oy sayfaları tarayıcısı olan her cihazda çalışır.
+
+## 🔎 Anahtar Kelimeler
+
+Game jam manager · game jam yazılımı · game jam oylama uygulaması · jam sayaç ·
+48 saat geri sayım sayacı · jam sunum aracı · itch.io teslim indirici · telefondan
+online oylama · QR kod oylama · hackathon yönetim yazılımı · OBS geri sayım browser
+source · game jam sonuç/puanlama · Windows game jam düzenleyici aracı.
+
 ## ℹ️
 
-JamDeck kapalı kaynaklı, **ücretsiz** bir uygulamadır. Sorun bildirimi ve
-öneriler için [Issues](../../issues) sayfasını kullanabilirsiniz.
+JamDeck **ücretsiz** ve **açık kaynaklı** ([GPL-3.0](LICENSE)) bir game jam
+yönetim uygulamasıdır. Sorun bildirimi ve öneriler için [Issues](../../issues)
+sayfasını kullanabilirsiniz.
 
 © 2026 tarikyzco

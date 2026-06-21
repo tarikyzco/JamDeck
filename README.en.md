@@ -4,9 +4,11 @@
 
 </div>
 
-<p align="center"><img src="JamDeck.png" width="400" alt="JamDeck"></p>
+<p align="center"><img src="JamDeck.png" width="400" alt="JamDeck — Game Jam Manager"></p>
 
-# JamDeck
+<p align="center"><b>Game Jam Manager</b> — itch.io submission download · online voting · 48-hour timer · presentation · results ceremony</p>
+
+# JamDeck — Game Jam Manager
 
 **All-in-one desktop toolkit for running game jams** — downloads builds from
 itch.io, presents them on stage, runs weighted **online** voting from phones
@@ -70,9 +72,43 @@ Português · 日本語.
 Step-by-step interactive guide — all screens, FAQ and tips. Opens directly in your browser
 (currently in Turkish); you can also download it for offline use.
 
+## ❓ FAQ
+
+**What is JamDeck?**
+A free Windows app that runs the whole operational side of a game jam (a "game jam
+manager"): it downloads submissions from itch.io, presents them on stage, collects
+online votes from phones, reveals results with a ceremony, and shows a 48-hour
+countdown on the OBS/venue screen.
+
+**Who is it for?**
+Game jam and hackathon organizers, university game-dev clubs, and event hosts who
+want one tool instead of stitching together a timer, a voting form, and a slideshow.
+
+**Does it need the internet?**
+The presentation and countdown run offline. Voting runs over the internet via a
+fixed public link/QR; downloading submissions and updates also use the internet.
+
+**How does voting work? Do I need an account?**
+Voters just scan a QR and vote from their phone — nothing to install. The organizer
+signs into Tailscale once (free) on first use so the app can publish a stable voting
+link. Weighted categories, single-use codes, live code board; stable up to ~500 people.
+
+**Is it free? Is it open source?**
+It is completely free and **open source** under the [GPL-3.0](LICENSE) license.
+
+**What platforms?**
+Windows 10/11 (WebView2). The phone voting pages work on any device with a browser.
+
+## 🔎 Keywords
+
+Game jam manager · game jam software · game jam voting app · game jam timer ·
+48-hour countdown timer · jam presentation tool · itch.io submission downloader ·
+online voting from phones · QR code voting · hackathon management software · OBS
+countdown browser source · game jam results / scoring · Windows game jam organizer tool.
+
 ## ℹ️
 
-JamDeck is a closed-source, **free** application. Use the
-[Issues](../../issues) page for bug reports and suggestions.
+JamDeck is a **free**, **open-source** ([GPL-3.0](LICENSE)) game jam management
+application. Use the [Issues](../../issues) page for bug reports and suggestions.
 
 © 2026 tarikyzco
